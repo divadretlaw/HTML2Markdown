@@ -119,12 +119,6 @@ private class QuoteToken: Token {
 	}
 }
 
-extension CharacterSet {
-	func containsUnicodeScalars(of character: Character) -> Bool {
-		return character.unicodeScalars.allSatisfy(contains(_:))
-	}
-}
-
 private class WhitespaceToken: Token {
 	required init() {}
 
@@ -135,6 +129,12 @@ private class WhitespaceToken: Token {
 			return .whitespace(whitespace)
 		}
 		return nil
+	}
+}
+
+private extension CharacterSet {
+	func containsUnicodeScalars(of character: Character) -> Bool {
+		return character.unicodeScalars.allSatisfy(contains(_:))
 	}
 }
 
