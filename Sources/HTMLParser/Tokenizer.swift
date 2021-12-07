@@ -8,217 +8,199 @@
 import Foundation
 
 enum TokenType: Equatable {
-	case openingTagStart
-	case closingTagStart
-	case tagEnd
-	case autoClosingTagEnd
-	case equalsSign
-	case whitespace
+	case openingTagStart(String)
+	case closingTagStart(String)
+	case tagEnd(String)
+	case autoClosingTagEnd(String)
+	case equalsSign(String)
 	case quote(String)
+	case whitespace(String)
 	case text(String)
 }
 
 private protocol Token: AnyObject {
-	var tokenType: TokenType { get }
-
-	init?(character: Character)
-
-	func accept(character: Character) -> Bool
-}
-
-private enum AllTokens {
-	static let types: [Token.Type] = [
-		TagStartToken.self,
-		TagEndToken.self,
-		AutoclosingTagEndToken.self,
-		EqualSignToken.self,
-		WhitespaceToken.self,
-		QuoteToken.self,
-		TextToken.self,
-	]
+	init()
+	func accept(scanner: Scanner) -> TokenType?
 }
 
 private class TagStartToken: Token {
-	var tokenType: TokenType = .openingTagStart
+	required init() {}
 
-	required init?(character: Character) {
-		guard character == "<" else {
-			return nil
+	func accept(scanner: Scanner) -> TokenType? {
+		var scanned = ""
+
+		if let openingBracket = scanner.scanString("<") {
+			scanned += openingBracket
+			let fallbackIndex = scanner.currentIndex
+
+			// we have "<", but is there more? Start by chomping any whitespace
+			if let whitespace = scanner.scanCharacters(from: .whitespacesAndNewlines) {
+				scanned += whitespace
+			}
+
+			if let slash = scanner.scanString("/") {
+				// there's a slash!
+				scanned += slash
+				return .closingTagStart(scanned)
+			}
+
+			// there's no slash, so rewind back to the fallback index
+			// and just return "<"
+			scanner.currentIndex = fallbackIndex
+			return .openingTagStart("<")
 		}
-	}
 
-	func accept(character: Character) -> Bool {
-		if character.isWhitespace {
-			return true
-		}
-
-		// TODO: check we're not already .closingTagStart
-		if character == "/" {
-			self.tokenType = .closingTagStart
-			return true
-		}
-
-		return false
+		return nil
 	}
 }
 
 private class TagEndToken: Token {
-	let tokenType: TokenType = .tagEnd
+	required init() {}
 
-	required init?(character: Character) {
-		guard character == ">" else {
-			return nil
+	func accept(scanner: Scanner) -> TokenType? {
+		if let closingBracket = scanner.scanString(">") {
+			return .tagEnd(closingBracket)
 		}
-	}
-
-	func accept(character: Character) -> Bool {
-		false
+		return nil
 	}
 }
 
 private class AutoclosingTagEndToken: Token {
-	var tokenType: TokenType {
-		if let delegateToToken = delegateToToken {
-			return delegateToToken.tokenType
-		}
+	required init() {}
 
-		if !complete {
-			return .text(self.text)
-		}
+	func accept(scanner: Scanner) -> TokenType? {
+		let fallbackIndex = scanner.currentIndex
+		var scanned = ""
 
-		return .autoClosingTagEnd
-	}
+		if let slash = scanner.scanString("/") {
+			scanned += slash
 
-	private var text: String
-	private var otherCharacters = [Character]()
-	private var complete = false
-	private var delegateToToken: Token?
+			// chomp any whitespace
+			if let whitespace = scanner.scanCharacters(from: .whitespacesAndNewlines) {
+				scanned += whitespace
+			}
 
-	required init?(character: Character) {
-		guard character == "/" else {
+			if let closingBracket = scanner.scanString(">") {
+				// there's a ">"
+				scanned += closingBracket
+				return .autoClosingTagEnd(scanned)
+			}
+
+			// there's no ">", so rewind back to the fallback index
+			// and return nothing
+			scanner.currentIndex = fallbackIndex
 			return nil
 		}
-		text = character.description
-	}
 
-	func accept(character: Character) -> Bool {
-		if let delegateToToken = delegateToToken {
-			return delegateToToken.accept(character: character)
-		}
-
-		if complete {
-			// don't accept any more
-			return false
-		}
-
-		self.text += character.description
-
-		if character.isWhitespace {
-			otherCharacters.append(character)
-			return true
-		}
-
-		if character == ">" {
-			complete = true
-			return true
-		}
-
-		// unexpected character - so this isn't the end of a tag
-		guard let delegateToToken = TextToken(character: "/") else {
-			return false
-		}
-
-		self.delegateToToken = delegateToToken
-		for otherCharacter in otherCharacters {
-			_ = delegateToToken.accept(character: otherCharacter)
-		}
-		return delegateToToken.accept(character: character)
+		return nil
 	}
 }
 
 private class EqualSignToken: Token {
-	let tokenType: TokenType = .equalsSign
+	required init() {}
 
-	required init?(character: Character) {
-		guard character == "=" else {
-			return nil
+	func accept(scanner: Scanner) -> TokenType? {
+		if let equals = scanner.scanString("=") {
+			return .equalsSign(equals)
 		}
-	}
-
-	func accept(character: Character) -> Bool {
-		false
-	}
-}
-
-private class WhitespaceToken: Token {
-	let tokenType: TokenType = .whitespace
-
-	required init?(character: Character) {
-		guard character.isWhitespace else {
-			return nil
-		}
-	}
-
-	func accept(character: Character) -> Bool {
-		character.isWhitespace
+		return nil
 	}
 }
 
 private class QuoteToken: Token {
-	var tokenType: TokenType = .quote("")
+	required init() {}
 
-	required init?(character: Character) {
-		guard character == "'" ||
-			character == "\"" else {
-				return nil
-			}
-
-		self.tokenType = .quote(character.description)
+	func accept(scanner: Scanner) -> TokenType? {
+		if let quote = scanner.scanString("'") ??
+			scanner.scanString("\"") {
+			return .quote(quote)
+		}
+		return nil
 	}
+}
 
-	func accept(character: Character) -> Bool {
-		false
+extension CharacterSet {
+	func containsUnicodeScalars(of character: Character) -> Bool {
+		return character.unicodeScalars.allSatisfy(contains(_:))
+	}
+}
+
+private class WhitespaceToken: Token {
+	required init() {}
+
+	private static let characterSet = CharacterSet.whitespacesAndNewlines
+
+	func accept(scanner: Scanner) -> TokenType? {
+		if let whitespace = scanner.scanCharacters(from: Self.characterSet) {
+			return .whitespace(whitespace)
+		}
+		return nil
 	}
 }
 
 private class TextToken: Token {
-	var tokenType: TokenType = .text("")
-	private var text = ""
+	private static let delimiters = CharacterSet(charactersIn: "<>/='\"").union(.whitespacesAndNewlines)
+	private static let allowedFirstCharacter = CharacterSet(charactersIn: "<>'=\"").union(.whitespacesAndNewlines).inverted
 
-	required init?(character: Character) {
-		text = character.description
-	}
+	required init() {}
 
-	func accept(character: Character) -> Bool {
-		text += character.description
-		tokenType = .text(self.text)
-		return true
+	func accept(scanner: Scanner) -> TokenType? {
+		let fallbackIndex = scanner.currentIndex
+		if let firstCharacter = scanner.scanCharacter(),
+		   Self.allowedFirstCharacter.containsUnicodeScalars(of: firstCharacter) {
+			var scanned = String(firstCharacter)
+
+			if let more = scanner.scanUpToCharacters(from: Self.delimiters) {
+				scanned += more
+			}
+
+			return .text(scanned)
+		}
+
+		// failed - so rewind
+		scanner.currentIndex = fallbackIndex
+		return nil
 	}
 }
 
 struct Tokenizer {
-	func tokenize(html: String) -> [TokenType] {
-		var tokens = [Token]()
+	private static let tokens: [Token] = [
+		TagStartToken(),
+		TagEndToken(),
+		AutoclosingTagEndToken(),
+		EqualSignToken(),
+		QuoteToken(),
+		WhitespaceToken(),
+		TextToken(),
+	]
 
-		var currentTokenVisitor: Token?
+	enum Error: Swift.Error {
+		case unclaimed(String)
+	}
 
-		for character in html {
-			// offer to the current visitor first
-			if let latestTokenVisitor = currentTokenVisitor,
-			   latestTokenVisitor.accept(character: character) {
-				// current visitor accepted this new character
-			} else {
-				// current visitor did not accept the new character, so find a new one
-				for tokenVisitor in AllTokens.types {
-					if let token = tokenVisitor.init(character: character) {
-						tokens.append(token)
-						currentTokenVisitor = token
-						break
-					}
+	func tokenize(html: String) throws -> [TokenType] {
+		var result = [TokenType]()
+
+		let scanner = Scanner(string: html)
+		scanner.charactersToBeSkipped = nil
+
+		while !scanner.isAtEnd {
+			var claimed = false
+
+			for token in Self.tokens {
+				if let token = token.accept(scanner: scanner) {
+					result.append(token)
+					claimed = true
+					break
 				}
+			}
+
+			guard claimed else {
+				let remaining = html[scanner.currentIndex...]
+				throw Error.unclaimed(String(remaining))
 			}
 		}
 
-		return tokens.map { $0.tokenType }
+		return result
 	}
 }
