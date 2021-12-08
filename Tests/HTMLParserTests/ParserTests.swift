@@ -17,19 +17,31 @@ final class ParserTests: XCTestCase {
 	func testOneElement() throws {
 		let html = "one< element >hello< / element >two"
 		let parsed = try self.doParse(html)
-		XCTAssertEqual(parsed, "[one]{element}[hello]{/element}[two]")
+		XCTAssertEqual(parsed, "[one]{element [:]}[hello]{/element}[two]")
+	}
+
+	func testOneElementWithAttribute() throws {
+		let html = "one< element att1 = \"one'one\" >hello< / element >two"
+		let parsed = try self.doParse(html)
+		XCTAssertEqual(parsed, "[one]{element [\"att1\": \"one\\'one\"]}[hello]{/element}[two]")
 	}
 
 	func testTwoElement() throws {
 		let html = "< one >first< / one >< two >second< / two >"
 		let parsed = try self.doParse(html)
-		XCTAssertEqual(parsed, "{one}[first]{/one}{two}[second]{/two}")
+		XCTAssertEqual(parsed, "{one [:]}[first]{/one}{two [:]}[second]{/two}")
 	}
 
 	func testAutoClosing() throws {
 		let html = "< br / >"
 		let parsed = try self.doParse(html)
-		XCTAssertEqual(parsed, "{br/}")
+		XCTAssertEqual(parsed, "{br [:]/}")
+	}
+
+	func testDeeplyNested() throws {
+		let html = "<body><h1>heading!</ h1 >< p>paragraph with <strong>highlight< /strong><br/>and <a href=\"google.com\"><em>link</em>.< / a></p></ body>"
+		let parsed = try self.doParse(html)
+		XCTAssertEqual(parsed, "{body [:]}{h1 [:]}[heading!]{/h1}{p [:]}[paragraph with ]{strong [:]}[highlight]{/strong}{br [:]/}[and ]{a [\"href\": \"google.com\"]}{em [:]}[link]{/em}[.]{/a}{/p}{/body}")
 	}
 }
 
@@ -52,34 +64,42 @@ extension Element: CustomStringConvertible {
 			}
 		case .opening:
 			result += "{"
-		case .openingWithName(let tagName):
-			result += "{\(tagName)"
-		case .opened(let tagName, let children):
-			result += "{\(tagName)}"
+		case .openingWithName(let tagName, let attributes):
+			result += "{\(tagName) \(String(describing: attributes))"
+		case .openingWithNameAndMaybeAttribute(let tagName, let attributes):
+			result += "{\(tagName) \(String(describing: attributes))"
+		case .openingWithNameAttributeName(let tagName, let attributes, let attributeName):
+			result += "{\(tagName) \(String(describing: attributes)) \(attributeName))"
+		case .openingWithNameAttributeNameEquals(let tagName, let attributes, let attributeName):
+			result += "{\(tagName) \(String(describing: attributes)) \(attributeName))="
+		case .openingWithNameAttributeNameEqualsQuote(let tagName, let attributes, let attributeName, let attributeValue, _):
+			result += "{\(tagName) \(String(describing: attributes)) \(attributeName))='\(attributeValue)"
+		case .opened(let tagName, let attributes, let children):
+			result += "{\(tagName) \(String(describing: attributes))}"
 			for child in children {
 				result += String(describing: child)
 			}
-		case .closing(let tagName, let children):
-			result += "{\(tagName)}"
+		case .closing(let tagName, let attributes, let children):
+			result += "{\(tagName) \(String(describing: attributes))}"
 			for child in children {
 				result += String(describing: child)
 			}
 			result += "{"
-		case .closingWithName(let openingTagName, let closingTagName, let children):
-			result += "{\(openingTagName)}"
+		case .closingWithName(let openingTagName, let closingTagName, let attributes, let children):
+			result += "{\(openingTagName) \(String(describing: attributes))}"
 			for child in children {
 				result += String(describing: child)
 			}
 			result += "{/\(closingTagName)"
-		case .closed(let tagName, let children):
+		case .closed(let tagName, let attributes, let children):
 			if children.count > 0 {
-				result += "{\(tagName)}"
+				result += "{\(tagName) \(String(describing: attributes))}"
 				for child in children {
 					result += String(describing: child)
 				}
 				result += "{/\(tagName)}"
 			} else {
-				result += "{\(tagName)/}"
+				result += "{\(tagName) \(String(describing: attributes))/}"
 			}
 		}
 

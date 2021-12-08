@@ -38,15 +38,27 @@ final class Element: Content {
 	}
 
 	enum ElementContent {
+		// this is a root element - it has no tag, but can have children
 		case root(children: [Content])
 
+		// received < waiting for a tag name
 		case opening
-		case openingWithName(tagName: String)
-		case opened(tagName: String, children: [Content])
+		// received < and the tag name
+		case openingWithName(tagName: String, attributes: [String : String])
+		// received <, the tag name and a space... so perhaps an attribute name is coming
+		case openingWithNameAndMaybeAttribute(tagName: String, attributes: [String : String])
+		// recieved <TAGNAME_ATTRIBUTENAME
+		case openingWithNameAttributeName(tagName: String, attributes: [String : String], attributeName: String)
+		// received <TAGNAME_ATTRIBUTENAME=
+		case openingWithNameAttributeNameEquals(tagName: String, attributes: [String : String], attributeName: String)
+		// received <TAGNAME_ATTRIBUTENAME='
+		case openingWithNameAttributeNameEqualsQuote(tagName: String, attributes: [String : String], attributeName: String, attributeValue: String, quote: TokenType)
 
-		case closing(tagName: String, children: [Content])
-		case closingWithName(openingTagName: String, closingTagName: String, children: [Content])
-		case closed(tagName: String, children: [Content])
+		case opened(tagName: String, attributes: [String : String], children: [Content])
+
+		case closing(tagName: String, attributes: [String : String], children: [Content])
+		case closingWithName(openingTagName: String, closingTagName: String, attributes: [String : String], children: [Content])
+		case closed(tagName: String, attributes: [String : String], children: [Content])
 
 		func accept(_ tokenType: TokenType) throws -> Self? {
 			switch (self, tokenType) {
@@ -80,42 +92,101 @@ final class Element: Content {
 				return self
 			case (.opening, .text(let text)):
 				// this is the opening tag name
-				return .openingWithName(tagName: text)
+				return .openingWithName(tagName: text, attributes: [:])
 
 			case (.openingWithName, .openingTagStart),
 				(.openingWithName, .closingTagStart),
 				(.openingWithName, .equalsSign),
 				(.openingWithName, .quote):
 				throw Error.unexpected(tokenType: tokenType)
-			case (.openingWithName(let tagName), .tagEnd):
+			case (.openingWithName(let tagName, let attributes), .tagEnd):
 				// the end of the opening tag
-				return .opened(tagName: tagName, children: [])
-			case (.openingWithName(let tagName), .autoClosingTagEnd):
+				return .opened(tagName: tagName, attributes: attributes, children: [])
+			case (.openingWithName(let tagName, let attributes), .autoClosingTagEnd):
 				// the end of the element
-				return .closed(tagName: tagName, children: [])
-			case (.openingWithName, .whitespace):
-				// ignore whitespace
-				return self
-			case (.openingWithName(let tagName), .text(let text)):
+				return .closed(tagName: tagName, attributes: attributes, children: [])
+			case (.openingWithName(let tagName, let attributes), .whitespace):
+				// we have a name and now a space... so perhaps there's an attribute coming next?
+				return .openingWithNameAndMaybeAttribute(tagName: tagName, attributes: attributes)
+			case (.openingWithName(let tagName, let attributes), .text(let text)):
 				// adding more to the tag name
-				return .openingWithName(tagName: tagName + text)
+				return .openingWithName(tagName: tagName + text, attributes: attributes)
 
-			case (.opened(let tagName, let children), .openingTagStart):
+			case (.openingWithNameAndMaybeAttribute, .openingTagStart),
+				(.openingWithNameAndMaybeAttribute, .closingTagStart),
+				(.openingWithNameAndMaybeAttribute, .equalsSign),
+				(.openingWithNameAndMaybeAttribute, .quote):
+				throw Error.unexpected(tokenType: tokenType)
+			case (.openingWithNameAndMaybeAttribute(let tagName, let attributes), .tagEnd):
+				return .opened(tagName: tagName, attributes: attributes, children: [])
+			case (.openingWithNameAndMaybeAttribute(let tagName, let attributes), .autoClosingTagEnd):
+				return .closed(tagName: tagName, attributes: attributes, children: [])
+			case (.openingWithNameAndMaybeAttribute, .whitespace):
+				return self
+			case (.openingWithNameAndMaybeAttribute(let tagName, let attributes), .text(let text)):
+				return .openingWithNameAttributeName(tagName: tagName, attributes: attributes, attributeName: text)
+
+			case (.openingWithNameAttributeName, .openingTagStart),
+				(.openingWithNameAttributeName, .closingTagStart),
+				(.openingWithNameAttributeName, .tagEnd),
+				(.openingWithNameAttributeName, .autoClosingTagEnd),
+				(.openingWithNameAttributeName, .quote):
+				throw Error.unexpected(tokenType: tokenType)
+			case (.openingWithNameAttributeName(let tagName, let attributes, let attributeName), .equalsSign):
+				return .openingWithNameAttributeNameEquals(tagName: tagName, attributes: attributes, attributeName: attributeName)
+			case (.openingWithNameAttributeName, .whitespace):
+				return self
+			case (.openingWithNameAttributeName(let tagName, let attributes, let attributeName), .text(let text)):
+				return .openingWithNameAttributeName(tagName: tagName, attributes: attributes, attributeName: attributeName + text)
+
+			// openingWithNameAttributeNameEquals: expecting a quote to start the attribute value; ignores whitespace
+			case (.openingWithNameAttributeNameEquals, .openingTagStart),
+				(.openingWithNameAttributeNameEquals, .closingTagStart),
+				(.openingWithNameAttributeNameEquals, .tagEnd),
+				(.openingWithNameAttributeNameEquals, .autoClosingTagEnd),
+				(.openingWithNameAttributeNameEquals, .equalsSign),
+				(.openingWithNameAttributeNameEquals, .text):
+				throw Error.unexpected(tokenType: tokenType)
+			case (.openingWithNameAttributeNameEquals(let tagName, let attributes, let attributeName), .quote):
+				return .openingWithNameAttributeNameEqualsQuote(tagName: tagName, attributes: attributes, attributeName: attributeName, attributeValue: "", quote: tokenType)
+			case (.openingWithNameAttributeNameEquals, .whitespace):
+				return self
+
+			// openingWithNameAttributeNameEqualsQuote: expecting the attribute value or a closing quote
+			case (.openingWithNameAttributeNameEqualsQuote(let tagName, let attributes, let attributeName, let attributeValue, let quote), .openingTagStart(let text)),
+				(.openingWithNameAttributeNameEqualsQuote(let tagName, let attributes, let attributeName, let attributeValue, let quote), .closingTagStart(let text)),
+				(.openingWithNameAttributeNameEqualsQuote(let tagName, let attributes, let attributeName, let attributeValue, let quote), .tagEnd(let text)),
+				(.openingWithNameAttributeNameEqualsQuote(let tagName, let attributes, let attributeName, let attributeValue, let quote), .autoClosingTagEnd(let text)),
+				(.openingWithNameAttributeNameEqualsQuote(let tagName, let attributes, let attributeName, let attributeValue, let quote), .equalsSign(let text)),
+				(.openingWithNameAttributeNameEqualsQuote(let tagName, let attributes, let attributeName, let attributeValue, let quote), .whitespace(let text)),
+				(.openingWithNameAttributeNameEqualsQuote(let tagName, let attributes, let attributeName, let attributeValue, let quote), .text(let text)):
+				return .openingWithNameAttributeNameEqualsQuote(tagName: tagName, attributes: attributes, attributeName: attributeName, attributeValue: attributeValue + text, quote: quote)
+			case (.openingWithNameAttributeNameEqualsQuote(let tagName, let attributes, let attributeName, let attributeValue, let quote), .quote(let text)):
+				if quote == tokenType {
+					// this quote token matches the quote that opened the attribute value - so this is the end of the value
+					var attributes = attributes
+					attributes[attributeName] = attributeValue
+					return .openingWithName(tagName: tagName, attributes: attributes)
+				}
+				// this quote doesn't match the quote that opened the attribute value - so treat it as text
+				return .openingWithNameAttributeNameEqualsQuote(tagName: tagName, attributes: attributes, attributeName: attributeName, attributeValue: attributeValue + text, quote: quote)
+
+			case (.opened(let tagName, let attributes, let children), .openingTagStart):
 				// offer to children first
 				if try self.offerToLatestChild(children: children, tokenType: tokenType) {
 					return self
 				}
 				// children aren't interested, so make a new child element
 				let newChildren = try self.makeNewElementChild(children: children, tokenType: tokenType)
-				return .opened(tagName: tagName, children: newChildren)
-			case (.opened(let tagName, let children), .closingTagStart):
+				return .opened(tagName: tagName, attributes: attributes, children: newChildren)
+			case (.opened(let tagName, let attributes, let children), .closingTagStart):
 				// offer to children first
 				if try self.offerToLatestChild(children: children, tokenType: tokenType) {
 					return self
 				}
 				// children aren't interested, start closing our element
-				return .closing(tagName: tagName, children: children)
-			case (.opened(let tagName, let children), _):
+				return .closing(tagName: tagName, attributes: attributes, children: children)
+			case (.opened(let tagName, let attributes, let children), _):
 				// offer to children first
 				if try self.offerToLatestChild(children: children, tokenType: tokenType) {
 					return self
@@ -123,7 +194,7 @@ final class Element: Content {
 				// children aren't interested, so make a new text child, and treat this
 				// token as if it were text
 				let newChildren = try self.makeNewTextChild(children: children, tokenType: tokenType)
-				return .opened(tagName: tagName, children: newChildren)
+				return .opened(tagName: tagName, attributes: attributes, children: newChildren)
 
 			case (.closing, .openingTagStart),
 				(.closing, .closingTagStart),
@@ -135,9 +206,9 @@ final class Element: Content {
 			case (.closing, .whitespace):
 				// chomp the whitespace
 				return self
-			case (.closing(let tagName, let children), .text(let text)):
+			case (.closing(let tagName, let attributes, let children), .text(let text)):
 				// this is the start of the closing tag name
-				return .closingWithName(openingTagName: tagName, closingTagName: text, children: children)
+				return .closingWithName(openingTagName: tagName, closingTagName: text, attributes: attributes, children: children)
 
 			case (.closingWithName, .openingTagStart),
 				(.closingWithName, .closingTagStart),
@@ -145,17 +216,17 @@ final class Element: Content {
 				(.closingWithName, .equalsSign),
 				(.closingWithName, .quote):
 				throw Error.unexpected(tokenType: tokenType)
-			case (.closingWithName(let openingTagName, let closingTagName, let children), .tagEnd):
+			case (.closingWithName(let openingTagName, let closingTagName, let attributes, let children), .tagEnd):
 				guard openingTagName == closingTagName else {
 					throw Error.mismatchedOpeningClosingTags(openingTagName: openingTagName, closingTagName: closingTagName)
 				}
-				return .closed(tagName: openingTagName, children: children)
+				return .closed(tagName: openingTagName, attributes: attributes, children: children)
 			case (.closingWithName, .whitespace):
 				// chomp the whitespace
 				return self
-			case (.closingWithName(let openingTagName, let closingTagName, let children), .text(let text)):
+			case (.closingWithName(let openingTagName, let closingTagName, let attributes, let children), .text(let text)):
 				// this is the more of the closing tag name
-				return .closingWithName(openingTagName: openingTagName, closingTagName: closingTagName + text, children: children)
+				return .closingWithName(openingTagName: openingTagName, closingTagName: closingTagName + text, attributes: attributes, children: children)
 
 			case (.closed, _):
 				// we are closed, so can't accept any new tokens
@@ -171,55 +242,7 @@ final class Element: Content {
 			// quote
 			// whitespace
 			// text
-
-
-
-
-//			switch tokenType {
-//			case .openingTagStart:
-//				return try handleOpeningTagStart(tokenType: tokenType)
-//			case .closingTagStart:
-//				return try handleClosingTagStart(tokenType: tokenType)
-//			case .tagEnd:
-//				return try handleTagEnd(tokenType: tokenType)
-//			case .autoClosingTagEnd:
-//				return try handleAutoClosingTagEnd(tokenType: tokenType)
-//			case .equalsSign:
-//				return try handleEqualsSign(tokenType: tokenType)
-//			case .quote:
-//				return try handleQuote(tokenType: tokenType)
-//			case .whitespace:
-//				return try handleWhitespace(tokenType: tokenType)
-//			case .text(let text):
-//				return try handleText(text)
-//			}
 		}
-
-		// <
-//		private func handleOpeningTagStart(tokenType: TokenType) throws -> Self? {
-//			switch self {
-//			case .root(let children):
-//				if try self.offerToLatestChild(children: children, tokenType: tokenType) {
-//					return self
-//				}
-//				let newChildren = try self.makeNewChild(children: children, tokenType: tokenType)
-//				return .root(children: children)
-//			case .opened(let children):
-//				if try self.offerToLatestChild(children: children, tokenType: tokenType) {
-//					return self
-//				}
-//				let newChildren = try self.makeNewChild(children: children, tokenType: tokenType)
-//				return .opened(children: children)
-//			case .opening,
-//					.openingWithName,
-//					.closing,
-//					.closingWithMatchingName:
-//				// if we're already opening or closing a tag, then another opening tag is illegal
-//				throw Error.unexpected(tokenType)
-//			case .closed:
-//				return nil
-//			}
-//		}
 
 		private func offerToLatestChild(children: [Content], tokenType: TokenType) throws -> Bool {
 			if let lastChild = children.last,
@@ -245,72 +268,6 @@ final class Element: Content {
 			return children
 		}
 
-//		// </
-//		private func handleClosingTagStart(tokenType: TokenType) throws -> Self? {
-//			switch self {
-//			case .root(let children),
-//					.opened(let children):
-//				if let lastChild = children.last,
-//				   try lastChild.accept(tokenType) {
-//					return self
-//				}
-//
-//				// last child didn't accept the token - so give it to a new child
-//				var children = children
-//				let newChild = Text()
-//				_ = try newChild.accept(tokenType)
-//				children.append(newChild)
-//				return .root(children: children)
-//			case .opening,
-//					.openingWithName,
-//					.closing,
-//					.closingWithMatchingName:
-//				throw Error.unexpected(tokenType)
-//			case .closed:
-//				return nil
-//			}
-//		}
-//
-//		// >
-//		private func handleTagEnd(tokenType: TokenType) throws -> Self? {
-//			switch self {
-//			case .root(let children),
-//					.opened(let children):
-//				<#code#>
-//			case .opening:
-//				<#code#>
-//			case .openingWithName(let name):
-//				<#code#>
-//			case .opened(let children):
-//				<#code#>
-//			case .closing(let children):
-//				<#code#>
-//			case .closingWithMatchingName(let children):
-//				<#code#>
-//			case .closed(let children):
-//				<#code#>
-//			}
-//		}
-//
-//		private func handleAutoClosingTagEnd(tokenType: TokenType) throws -> Self? {
-//			preconditionFailure()
-//		}
-//
-//		private func handleEqualsSign(tokenType: TokenType) throws -> Self? {
-//			preconditionFailure()
-//		}
-//
-//		private func handleQuote(tokenType: TokenType) throws -> Self? {
-//			preconditionFailure()
-//		}
-//
-//		private func handleWhitespace(tokenType: TokenType) throws -> Self? {
-//			preconditionFailure()
-//		}
-//
-//		private func handleText(_ text: String) throws -> Self? {
-//			preconditionFailure()
-//		}
 	}
 
 	var content: ElementContent
