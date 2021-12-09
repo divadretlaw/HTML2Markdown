@@ -16,6 +16,7 @@ enum TokenType: Equatable {
 	case quote(String)
 	case whitespace(String)
 	case text(String)
+	case endOfFile
 }
 
 private protocol Token: AnyObject {
@@ -200,6 +201,8 @@ struct Tokenizer {
 				throw Error.unclaimed(String(remaining))
 			}
 		}
+
+		result.append(.endOfFile)
 
 		return result
 	}

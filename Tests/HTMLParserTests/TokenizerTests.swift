@@ -4,67 +4,72 @@ import XCTest
 final class TokenizerTests: XCTestCase {
 	func testOpeningTagStart() throws {
 		let t = Tokenizer()
-		XCTAssertEqual(try t.tokenize(html: "<"), [.openingTagStart("<")])
+		XCTAssertEqual(try t.tokenize(html: "<"), [.openingTagStart("<"), .endOfFile])
 		XCTAssertEqual(try t.tokenize(html: "<b"), [
 			.openingTagStart("<"),
-			.text("b")
+			.text("b"),
+			.endOfFile
 		])
 		XCTAssertEqual(try t.tokenize(html: "<  "), [
 			.openingTagStart("<"),
-			.whitespace("  ")
+			.whitespace("  "),
+			.endOfFile
 		])
 	}
 
 	func testClosingTagStart() throws {
 		let t = Tokenizer()
-		XCTAssertEqual(try t.tokenize(html: "</"), [.closingTagStart("</")])
-		XCTAssertEqual(try t.tokenize(html: "< /"), [.closingTagStart("< /")])
+		XCTAssertEqual(try t.tokenize(html: "</"), [.closingTagStart("</"), .endOfFile])
+		XCTAssertEqual(try t.tokenize(html: "< /"), [.closingTagStart("< /"), .endOfFile])
 		XCTAssertEqual(try t.tokenize(html: "<//"), [
 			.closingTagStart("</"),
-			.text("/")
+			.text("/"),
+			.endOfFile
 		])
 	}
 
 	func testTagEnd() throws {
 		let t = Tokenizer()
-		XCTAssertEqual(try t.tokenize(html: ">"), [.tagEnd(">")])
+		XCTAssertEqual(try t.tokenize(html: ">"), [.tagEnd(">"), .endOfFile])
 		XCTAssertEqual(try t.tokenize(html: ">p"), [
 			.tagEnd(">"),
-			.text("p")
+			.text("p"),
+			.endOfFile
 		])
 	}
 
 	func testAutoClosingTagEnd() throws {
 		let t = Tokenizer()
-		XCTAssertEqual(try t.tokenize(html: "/>"), [.autoClosingTagEnd("/>")])
-		XCTAssertEqual(try t.tokenize(html: "/ >"), [.autoClosingTagEnd("/ >")])
+		XCTAssertEqual(try t.tokenize(html: "/>"), [.autoClosingTagEnd("/>"), .endOfFile])
+		XCTAssertEqual(try t.tokenize(html: "/ >"), [.autoClosingTagEnd("/ >"), .endOfFile])
 		XCTAssertEqual(try t.tokenize(html: "/ >p"), [
 			.autoClosingTagEnd("/ >"),
-			.text("p")
+			.text("p"),
+			.endOfFile
 		])
 	}
 
 	func testEqualSign() throws {
 		let t = Tokenizer()
-		XCTAssertEqual(try t.tokenize(html: "="),[.equalsSign("=")])
+		XCTAssertEqual(try t.tokenize(html: "="),[.equalsSign("="), .endOfFile])
 	}
 
 	func testQuote() throws {
 		let t = Tokenizer()
-		XCTAssertEqual(try t.tokenize(html: "'"), [.quote("'")])
-		XCTAssertEqual(try t.tokenize(html: "\""), [.quote("\"")])
+		XCTAssertEqual(try t.tokenize(html: "'"), [.quote("'"), .endOfFile])
+		XCTAssertEqual(try t.tokenize(html: "\""), [.quote("\""), .endOfFile])
 	}
 
 	func testWhiteSpace() throws {
 		let t = Tokenizer()
-		XCTAssertEqual(try t.tokenize(html: " "), [.whitespace(" ")])
-		XCTAssertEqual(try t.tokenize(html: "\t"), [.whitespace("\t")])
-		XCTAssertEqual(try t.tokenize(html: "\n"), [.whitespace("\n")])
-		XCTAssertEqual(try t.tokenize(html: "  "), [.whitespace("  ")])
-		XCTAssertEqual(try t.tokenize(html: " \t"), [.whitespace(" \t")])
-		XCTAssertEqual(try t.tokenize(html: "\t "), [.whitespace("\t ")])
-		XCTAssertEqual(try t.tokenize(html: " \n"), [.whitespace(" \n")])
-		XCTAssertEqual(try t.tokenize(html: "\n "), [.whitespace("\n ")])
+		XCTAssertEqual(try t.tokenize(html: " "), [.whitespace(" "), .endOfFile])
+		XCTAssertEqual(try t.tokenize(html: "\t"), [.whitespace("\t"), .endOfFile])
+		XCTAssertEqual(try t.tokenize(html: "\n"), [.whitespace("\n"), .endOfFile])
+		XCTAssertEqual(try t.tokenize(html: "  "), [.whitespace("  "), .endOfFile])
+		XCTAssertEqual(try t.tokenize(html: " \t"), [.whitespace(" \t"), .endOfFile])
+		XCTAssertEqual(try t.tokenize(html: "\t "), [.whitespace("\t "), .endOfFile])
+		XCTAssertEqual(try t.tokenize(html: " \n"), [.whitespace(" \n"), .endOfFile])
+		XCTAssertEqual(try t.tokenize(html: "\n "), [.whitespace("\n "), .endOfFile])
 	}
 
 	func testText() throws {
@@ -72,53 +77,63 @@ final class TokenizerTests: XCTestCase {
 		XCTAssertEqual(try t.tokenize(html: "💩"),
 					   [
 						.text("💩"),
+						.endOfFile
 					   ])
 		XCTAssertEqual(try t.tokenize(html: "/hi"),
 					   [
 						.text("/hi"),
+						.endOfFile
 					   ])
 		XCTAssertEqual(try t.tokenize(html: "hi there"),
 					   [
 						.text("hi"),
 						.whitespace(" "),
 						.text("there"),
+						.endOfFile
 					   ])
 		XCTAssertEqual(try t.tokenize(html: "h<"),
 					   [
 						.text("h"),
-						.openingTagStart("<")
+						.openingTagStart("<"),
+						.endOfFile
 					   ])
 		XCTAssertEqual(try t.tokenize(html: "h>"),
 					   [
 						.text("h"),
-						.tagEnd(">")
+						.tagEnd(">"),
+						.endOfFile
 					   ])
 		// Not great - ideally this would be `.text("h/")`
 		// ¯\_(ツ)_/¯
 		XCTAssertEqual(try t.tokenize(html: "h/"),
 					   [
 						.text("h"),
-						.text("/")
+						.text("/"),
+						.endOfFile
 					   ])
 		XCTAssertEqual(try t.tokenize(html: "h="),
 					   [
 						.text("h"),
-						.equalsSign("=")
+						.equalsSign("="),
+						.endOfFile
 					   ])
 		XCTAssertEqual(try t.tokenize(html: "h'"),
 					   [
 						.text("h"),
-						.quote("'")
+						.quote("'"),
+						.endOfFile
 					   ])
 		XCTAssertEqual(try t.tokenize(html: "h\""),
 					   [
 						.text("h"),
-						.quote("\"")
+						.quote("\""),
+						.endOfFile
 					   ])
 		XCTAssertEqual(try t.tokenize(html: "h "),
 					   [
 						.text("h"),
-						.whitespace(" ")
+						.whitespace(" "),
+						.endOfFile
 					   ])
 	}
 
@@ -128,7 +143,8 @@ final class TokenizerTests: XCTestCase {
 					   [
 						.openingTagStart("<"),
 						.text("tag"),
-						.tagEnd(">")
+						.tagEnd(">"),
+						.endOfFile
 					   ])
 	}
 
@@ -138,7 +154,8 @@ final class TokenizerTests: XCTestCase {
 					   [
 						.closingTagStart("</"),
 						.text("tag"),
-						.tagEnd(">")
+						.tagEnd(">"),
+						.endOfFile
 					   ])
 	}
 
@@ -148,7 +165,8 @@ final class TokenizerTests: XCTestCase {
 					   [
 						.openingTagStart("<"),
 						.text("tag"),
-						.autoClosingTagEnd("/>")
+						.autoClosingTagEnd("/>"),
+						.endOfFile
 					   ])
 	}
 
@@ -197,6 +215,7 @@ final class TokenizerTests: XCTestCase {
 						.closingTagStart("</"),
 						.text("p"),
 						.tagEnd(">"),
+						.endOfFile
 					   ])
 	}
 }
