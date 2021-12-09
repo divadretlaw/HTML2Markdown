@@ -1,5 +1,5 @@
 import XCTest
-@testable import HTMLParser
+@testable import HTML2Markdown
 
 final class HTMLParserTests: XCTestCase {
 	private func doParse(_ html: String) throws -> String {

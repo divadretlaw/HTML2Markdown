@@ -1,5 +1,5 @@
 import XCTest
-@testable import HTMLParser
+@testable import HTML2Markdown
 
 final class MarkdownGeneratorTests: XCTestCase {
 	private func doConvert(_ html: String) throws -> String {
