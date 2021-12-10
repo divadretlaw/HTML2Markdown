@@ -321,7 +321,7 @@ final class HTMLElement: Content {
 	}
 }
 
-struct HTMLParser {
+public struct HTMLParser {
 	public init() {}
 	
 	public func parse(html: String) throws -> Element {
