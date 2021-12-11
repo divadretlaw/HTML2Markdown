@@ -65,11 +65,14 @@ final class TokenizerTests: XCTestCase {
 		XCTAssertEqual(try t.tokenize(html: " "), [.whitespace(" "), .endOfFile])
 		XCTAssertEqual(try t.tokenize(html: "\t"), [.whitespace("\t"), .endOfFile])
 		XCTAssertEqual(try t.tokenize(html: "\n"), [.whitespace("\n"), .endOfFile])
+		XCTAssertEqual(try t.tokenize(html: "\r"), [.whitespace("\r"), .endOfFile])
 		XCTAssertEqual(try t.tokenize(html: "  "), [.whitespace("  "), .endOfFile])
 		XCTAssertEqual(try t.tokenize(html: " \t"), [.whitespace(" \t"), .endOfFile])
 		XCTAssertEqual(try t.tokenize(html: "\t "), [.whitespace("\t "), .endOfFile])
 		XCTAssertEqual(try t.tokenize(html: " \n"), [.whitespace(" \n"), .endOfFile])
 		XCTAssertEqual(try t.tokenize(html: "\n "), [.whitespace("\n "), .endOfFile])
+		XCTAssertEqual(try t.tokenize(html: " \r"), [.whitespace(" \r"), .endOfFile])
+		XCTAssertEqual(try t.tokenize(html: "\r "), [.whitespace("\r "), .endOfFile])
 	}
 
 	func testText() throws {
@@ -133,6 +136,12 @@ final class TokenizerTests: XCTestCase {
 					   [
 						.text("h"),
 						.whitespace(" "),
+						.endOfFile
+					   ])
+		XCTAssertEqual(try t.tokenize(html: "h\r\n"),
+					   [
+						.text("h"),
+						.whitespace("\r\n"),
 						.endOfFile
 					   ])
 	}
@@ -214,6 +223,32 @@ final class TokenizerTests: XCTestCase {
 						.whitespace("\n"),
 						.closingTagStart("</"),
 						.text("p"),
+						.tagEnd(">"),
+						.endOfFile
+					   ])
+	}
+
+	func testEntityDecoding() throws {
+		let html = "&quot;&#34;&amp;&#38;&apos;&#39;&lt;&#60;&gt;&#62;&nbsp;&#160;&euro;&#128;&pound;&#163;&copy;&#169;&eacute;&#233;&Eacute;&#201;"
+		let expectedText = "\"\"&&''<<>>  €€££©©ééÉÉ"
+		XCTAssertEqual(try Tokenizer().tokenize(html: html), [.text(expectedText), .endOfFile])
+	}
+
+	func testEmptySpan() throws {
+		let html = "<span class=\"theClass\"></span>"
+		XCTAssertEqual(try Tokenizer().tokenize(html: html),
+					   [
+						.openingTagStart("<"),
+						.text("span"),
+						.whitespace(" "),
+						.text("class"),
+						.equalsSign("="),
+						.quote("\""),
+						.text("theClass"),
+						.quote("\""),
+						.tagEnd(">"),
+						.closingTagStart("</"),
+						.text("span"),
 						.tagEnd(">"),
 						.endOfFile
 					   ])

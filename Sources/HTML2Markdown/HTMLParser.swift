@@ -16,6 +16,27 @@ public enum Element {
 	case root(children: [Element])
 	case element(tag: Tag, children: [Element])
 	case text(text: String)
+
+	func isEmpty() -> Bool {
+		var result: Bool
+
+		switch self {
+		case let .root(children):
+			result = isEmpty(children)
+		case let .element(_, children):
+			result = isEmpty(children)
+		case let .text(text):
+			result = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+		}
+
+		return result
+	}
+
+	private func isEmpty(_ children: [Element]) -> Bool {
+		return children.reduce(into: true) { isEmpty, child in
+			isEmpty = isEmpty && child.isEmpty()
+		}
+	}
 }
 
 protocol Content {
@@ -51,6 +72,8 @@ final class HTMLElement: Content {
 	}
 
 	enum ElementContent {
+		private static let noContentTags = ["br"]
+
 		// this is a root element - it has no tag, but can have children
 		case root(children: [Content])
 
@@ -83,7 +106,12 @@ final class HTMLElement: Content {
 				// children aren't interested, so make a new child element
 				let newChildren = try self.makeNewElementChild(children: children, tokenType: tokenType)
 				return .root(children: newChildren)
-			case (.root, .endOfFile):
+			case (.root(let children), .endOfFile):
+				// offer to children first
+				if try self.offerToLatestChild(children: children, tokenType: tokenType) {
+					return self
+				}
+				// children aren't interested, so parsing is finished
 				return self
 			case (.root(let children), _):
 				// offer to children first
@@ -118,6 +146,9 @@ final class HTMLElement: Content {
 				throw Error.unexpected(tokenType: tokenType)
 			case (.openingWithName(let tagName, let attributes), .tagEnd):
 				// the end of the opening tag
+				if Self.noContentTags.contains(tagName) {
+					return .closed(tagName: tagName, attributes: attributes, children: [])
+				}
 				return .opened(tagName: tagName, attributes: attributes, children: [])
 			case (.openingWithName(let tagName, let attributes), .autoClosingTagEnd):
 				// the end of the element
@@ -136,6 +167,10 @@ final class HTMLElement: Content {
 				(.openingWithNameAndMaybeAttribute, .endOfFile):
 				throw Error.unexpected(tokenType: tokenType)
 			case (.openingWithNameAndMaybeAttribute(let tagName, let attributes), .tagEnd):
+				// the end of the opening tag
+				if Self.noContentTags.contains(tagName) {
+					return .closed(tagName: tagName, attributes: attributes, children: [])
+				}
 				return .opened(tagName: tagName, attributes: attributes, children: [])
 			case (.openingWithNameAndMaybeAttribute(let tagName, let attributes), .autoClosingTagEnd):
 				return .closed(tagName: tagName, attributes: attributes, children: [])

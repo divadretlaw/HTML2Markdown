@@ -43,6 +43,50 @@ final class HTMLParserTests: XCTestCase {
 		let parsed = try self.doParse(html)
 		XCTAssertEqual(parsed, "{body [:]}{h1 [:]}[heading!]{/h1}{p [:]}[paragraph with ]{strong [:]}[highlight]{/strong}{br [:]/}[and ]{a [\"href\": \"google.com\"]}{em [:]}[link]{/em}[.]{/a}{/p}{/body}")
 	}
+
+	func testEmptySpan() throws {
+		let html = "<span class=\"theClass\"></span>"
+		let parsed = try self.doParse(html)
+		XCTAssertEqual(parsed, "{span [\"class\": \"theClass\"]/}")
+	}
+
+	func testUnclosedParagraph() throws {
+		let html = "<p>oh no"
+		XCTAssertThrowsError(try self.doParse(html)) { error in
+			XCTAssertEqual(String(describing: error), "unexpected(tokenType: HTML2Markdown.TokenType.endOfFile)")
+		}
+	}
+
+	func testUnclosedLineBreak() throws {
+		XCTAssertEqual(try self.doParse("<br>"), "{br [:]/}")
+		XCTAssertEqual(try self.doParse("< br >"), "{br [:]/}")
+		XCTAssertEqual(try self.doParse("<br attributeName = \"value\">"), "{br [\"attributeName\": \"value\"]/}")
+		XCTAssertEqual(try self.doParse("<br attributeName = \"value\" >"), "{br [\"attributeName\": \"value\"]/}")
+	}
+
+	func testUnclosedLineBreak_cannotImplicitlyClose() throws {
+		XCTAssertThrowsError(try self.doParse("<br attributeName")) { error in
+			XCTAssertEqual(String(describing: error), "unexpected(tokenType: HTML2Markdown.TokenType.endOfFile)")
+		}
+		XCTAssertThrowsError(try self.doParse("<br attributeName ")) { error in
+			XCTAssertEqual(String(describing: error), "unexpected(tokenType: HTML2Markdown.TokenType.endOfFile)")
+		}
+		XCTAssertThrowsError(try self.doParse("<br attributeName =")) { error in
+			XCTAssertEqual(String(describing: error), "unexpected(tokenType: HTML2Markdown.TokenType.endOfFile)")
+		}
+		XCTAssertThrowsError(try self.doParse("<br attributeName = ")) { error in
+			XCTAssertEqual(String(describing: error), "unexpected(tokenType: HTML2Markdown.TokenType.endOfFile)")
+		}
+		XCTAssertThrowsError(try self.doParse("<br attributeName = \"")) { error in
+			XCTAssertEqual(String(describing: error), "unexpected(tokenType: HTML2Markdown.TokenType.endOfFile)")
+		}
+		XCTAssertThrowsError(try self.doParse("<br attributeName = \"value")) { error in
+			XCTAssertEqual(String(describing: error), "unexpected(tokenType: HTML2Markdown.TokenType.endOfFile)")
+		}
+		XCTAssertThrowsError(try self.doParse("<br attributeName = \"value" )) { error in
+			XCTAssertEqual(String(describing: error), "unexpected(tokenType: HTML2Markdown.TokenType.endOfFile)")
+		}
+	}
 }
 
 // MARK: - crude extensions to turn the parsed DOM into a string, for making assertions... with <> turned into {} and textual element content surrounded with []
@@ -73,67 +117,3 @@ extension Element: CustomStringConvertible {
 		return result
 	}
 }
-
-//extension HTMLText: CustomStringConvertible {
-//	public var description: String {
-//		"[\(text)]"
-//	}
-//}
-//
-//extension HTMLElement: CustomStringConvertible {
-//	public var description: String {
-//		var result = ""
-//
-//		switch self.content {
-//		case .root(children: let children):
-//			for child in children {
-//				result += String(describing: child)
-//			}
-//		case .opening:
-//			result += "{"
-//		case .openingWithName(let tagName, let attributes):
-//			result += "{\(tagName) \(String(describing: attributes))"
-//		case .openingWithNameAndMaybeAttribute(let tagName, let attributes):
-//			result += "{\(tagName) \(String(describing: attributes))"
-//		case .openingWithNameAttributeName(let tagName, let attributes, let attributeName):
-//			result += "{\(tagName) \(String(describing: attributes)) \(attributeName))"
-//		case .openingWithNameAttributeNameEquals(let tagName, let attributes, let attributeName):
-//			result += "{\(tagName) \(String(describing: attributes)) \(attributeName))="
-//		case .openingWithNameAttributeNameEqualsQuote(let tagName, let attributes, let attributeName, let attributeValue, _):
-//			result += "{\(tagName) \(String(describing: attributes)) \(attributeName))='\(attributeValue)"
-//		case .opened(let tagName, let attributes, let children):
-//			result += "{\(tagName) \(String(describing: attributes))}"
-//			for child in children {
-//				result += String(describing: child)
-//			}
-//		case .closing(let tagName, let attributes, let children):
-//			result += "{\(tagName) \(String(describing: attributes))}"
-//			for child in children {
-//				result += String(describing: child)
-//			}
-//			result += "{"
-//		case .closingWithName(let openingTagName, let closingTagName, let attributes, let children):
-//			result += "{\(openingTagName) \(String(describing: attributes))}"
-//			for child in children {
-//				result += String(describing: child)
-//			}
-//			result += "{/\(closingTagName)"
-//		case .closed(let tagName, let attributes, let children):
-//			if children.count > 0 {
-//				result += "{\(tagName) \(String(describing: attributes))}"
-//				for child in children {
-//					result += String(describing: child)
-//				}
-//				result += "{/\(tagName)}"
-//			} else {
-//				result += "{\(tagName) \(String(describing: attributes))/}"
-//			}
-//		}
-//
-//		return result
-//	}
-//
-//	func testReminders() {
-//		XCTFail("<p>mismatched case in tags - see crs SNT</P>")
-//	}
-//}
