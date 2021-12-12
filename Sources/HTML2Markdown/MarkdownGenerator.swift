@@ -32,7 +32,11 @@ public extension Element {
 			.trimmingCharacters(in: .whitespacesAndNewlines)
 	}
 
-	private func toMarkdownWithError(context: OutputContext, childIndex: Int) -> String {
+	private func toMarkdownWithError(
+		context: OutputContext,
+		childIndex: Int,
+		prefixPostfixBlock: ((String, String) -> Void)? = nil
+	) -> String {
 		var result = ""
 
 		switch self {
@@ -72,9 +76,30 @@ public extension Element {
 				}
 				// TODO: strip whitespace on the next line of text, immediately after this linebreak
 			case "em":
-				result += "_" + output(children) + "_"
+				var prefix: String = ""
+				var postfix: String = ""
+
+				let blockToPass: (String, String) -> Void = {
+					prefix = $0
+					postfix = $1
+				}
+
+				let text = output(children, prefixPostfixBlock: blockToPass)
+
+				// I'd rather use _ here, but cmark-gfm has better behaviour with *
+				result += "\(prefix)*" + text + "*\(postfix)"
 			case "strong":
-				result += "**" + output(children) + "**"
+				var prefix: String = ""
+				var postfix: String = ""
+
+				let blockToPass: (String, String) -> Void = {
+					prefix = $0
+					postfix = $1
+				}
+
+				let text = output(children, prefixPostfixBlock: blockToPass)
+
+				result += "\(prefix)**" + text + "**\(postfix)"
 			case "a":
 				if let destination = tag.attributes["href"] {
 					result += "[\(output(children))](\(destination))"
@@ -113,14 +138,17 @@ public extension Element {
 				result += output(children)
 			}
 		case let .text(text):
+			// replace all whitespace with a single space, and escape *
+
 			// Notes:
 			// the first space here is an ideographic space, U+3000
 			// second space is non-breaking space, U+00A0
 			// third space is a regular space, U+0020
-			let text = self.replace(regex: "[　  \t\n\r]{1,}", with: " ", in: text /*.trimmingCharacters(in: .newlines)*/)
-				.replacingOccurrences(of: "*", with: "\\*")
+			let text = self.replace(regex: "[　  \t\n\r]{1,}", with: " ", in: text)
+
 			if !text.isEmpty {
 				result += text
+					.replacingOccurrences(of: "*", with: "\\*")
 			}
 		}
 
@@ -137,7 +165,11 @@ public extension Element {
 		return regex.stringByReplacingMatches(in: string, options: [], range: range, withTemplate: replacement)
 	}
 
-	private func output(_ children: [Element], context: OutputContext = []) -> String {
+	private func output(
+		_ children: [Element],
+		context: OutputContext = [],
+		prefixPostfixBlock: ((String, String) -> Void)? = nil
+	) -> String {
 		var result = ""
 		let childrenWithContent = children.filter { $0.shouldRender() }
 
@@ -149,7 +181,20 @@ public extension Element {
 			if index == childrenWithContent.count - 1 {
 				context.insert(.isFinalChild)
 			}
-			result += child.toMarkdownWithError(context: context, childIndex: index)
+			result += child.toMarkdownWithError(context: context, childIndex: index, prefixPostfixBlock: prefixPostfixBlock)
+		}
+
+		if let prefixPostfixBlock = prefixPostfixBlock {
+			if result.hasPrefix(" ") && result.hasSuffix(" ") {
+				prefixPostfixBlock(" ", " ")
+				result = result.trimmingCharacters(in: .whitespaces)
+			} else if result.hasPrefix(" ") {
+				prefixPostfixBlock(" ", "")
+				result = result.trimmingCharacters(in: .whitespaces)
+			} else if result.hasSuffix(" ") {
+				prefixPostfixBlock("", " ")
+				result = result.trimmingCharacters(in: .whitespaces)
+			}
 		}
 		return result
 	}

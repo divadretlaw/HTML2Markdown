@@ -41,7 +41,7 @@ final class MarkdownGeneratorTests: XCTestCase {
 	func testEmphasis() throws {
 		let html = "<em>hello</em>"
 		XCTAssertEqual(try doConvert(html),
-					   "_hello_")
+					   "*hello*")
 	}
 
 	func testStrong() throws {
@@ -131,6 +131,30 @@ final class MarkdownGeneratorTests: XCTestCase {
 		let html = "<span class=\"theClass\"></span>"
 		XCTAssertEqual(try doConvert(html),
 					   "")
+	}
+
+	func testWhitespaceAroundStrongAndEmphasis_1() throws {
+		let html = "one<em> two </em>three"
+		XCTAssertEqual(try doConvert(html),
+					   "one *two* three")
+	}
+
+	func testWhitespaceAroundStrongAndEmphasis_2() throws {
+		let html = "one<strong> two </strong>three"
+		XCTAssertEqual(try doConvert(html),
+					   "one **two** three")
+	}
+
+	func testWhitespaceAroundStrongAndEmphasis_3() throws {
+		let html = "one<strong><em> two </em></strong>three"
+		XCTAssertEqual(try doConvert(html),
+					   "one ***two*** three")
+	}
+
+	func testWhitespaceAroundStrongAndEmphasis_4() throws {
+		let html = "one<strong> two<em> three </em>four </strong>five"
+		XCTAssertEqual(try doConvert(html),
+					   "one **two *three* four** five")
 	}
 
 	private func doTestInertTag(_ tagName: String) throws {
