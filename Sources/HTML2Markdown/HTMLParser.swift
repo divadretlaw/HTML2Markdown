@@ -278,7 +278,7 @@ final class HTMLElement: Content {
 				(.closingWithName, .endOfFile):
 				throw Error.unexpected(tokenType: tokenType)
 			case (.closingWithName(let openingTagName, let closingTagName, let attributes, let children), .tagEnd):
-				guard openingTagName == closingTagName else {
+				guard openingTagName.lowercased() == closingTagName.lowercased() else {
 					throw Error.mismatchedOpeningClosingTags(openingTagName: openingTagName, closingTagName: closingTagName)
 				}
 				return .closed(tagName: openingTagName, attributes: attributes, children: children)

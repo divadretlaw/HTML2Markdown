@@ -15,7 +15,7 @@ final class HTMLParserTests: XCTestCase {
 	}
 
 	func testOneElement() throws {
-		let html = "one< element >hello< / element >two"
+		let html = "one< element >hello< / ELEMENT >two"
 		let parsed = try self.doParse(html)
 		XCTAssertEqual(parsed, "[one]{element [:]}[hello]{/element}[two]")
 	}
@@ -85,6 +85,12 @@ final class HTMLParserTests: XCTestCase {
 		}
 		XCTAssertThrowsError(try self.doParse("<br attributeName = \"value" )) { error in
 			XCTAssertEqual(String(describing: error), "unexpected(tokenType: HTML2Markdown.TokenType.endOfFile)")
+		}
+	}
+
+	func testMismatchedTagName() throws {
+		XCTAssertThrowsError(try self.doParse("<p>hello</div>")) { error in
+			XCTAssertEqual(String(describing: error), "mismatchedOpeningClosingTags(openingTagName: \"p\", closingTagName: \"div\")")
 		}
 	}
 }

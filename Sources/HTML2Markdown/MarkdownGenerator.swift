@@ -7,6 +7,18 @@
 
 import Foundation
 
+public enum MarkdownGenerator {
+	public struct Options: OptionSet {
+		public let rawValue: Int
+
+		public static let unorderedListBullets = Options(rawValue: 1 << 0)
+
+		public init(rawValue: Int) {
+			self.rawValue = rawValue
+		}
+	}
+}
+
 public extension Element {
 	struct OutputContext: OptionSet {
 		public let rawValue: UInt
@@ -22,8 +34,8 @@ public extension Element {
 		static let isOrderedList = OutputContext(rawValue: 1 << 4)
 	}
 
-	func toMarkdownWithError() -> String {
-		var markdown = self.toMarkdownWithError(context: [], childIndex: 0)
+	func toMarkdown(options: MarkdownGenerator.Options = []) -> String {
+		var markdown = self.toMarkdown(options: options, context: [], childIndex: 0)
 
 		// we only want a maximum of two consecutive newlines
 		markdown = self.replace(regex: "[\n]{3,}", with: "\n\n", in: markdown)
@@ -32,7 +44,8 @@ public extension Element {
 			.trimmingCharacters(in: .whitespacesAndNewlines)
 	}
 
-	private func toMarkdownWithError(
+	private func toMarkdown(
+		options: MarkdownGenerator.Options,
 		context: OutputContext,
 		childIndex: Int,
 		prefixPostfixBlock: ((String, String) -> Void)? = nil
@@ -54,7 +67,7 @@ public extension Element {
 				if index == childrenWithContent.count - 1 {
 					context.insert(.isFinalChild)
 				}
-				result += child.toMarkdownWithError(context: context, childIndex: index)
+				result += child.toMarkdown(options: options, context: context, childIndex: index)
 			}
 		case let .element(tag , children):
 			switch tag.name.lowercased() {
@@ -64,7 +77,7 @@ public extension Element {
 					result += "\n"
 				}
 
-				result += output(children).trimmingCharacters(in: .whitespacesAndNewlines)
+				result += output(children, options: options).trimmingCharacters(in: .whitespacesAndNewlines)
 
 				if !context.contains(.isSingleChildInRoot) &&
 					!context.contains(.isFinalChild) {
@@ -84,7 +97,7 @@ public extension Element {
 					postfix = $1
 				}
 
-				let text = output(children, prefixPostfixBlock: blockToPass)
+				let text = output(children, options: options, prefixPostfixBlock: blockToPass)
 
 				// I'd rather use _ here, but cmark-gfm has better behaviour with *
 				result += "\(prefix)*" + text + "*\(postfix)"
@@ -97,20 +110,20 @@ public extension Element {
 					postfix = $1
 				}
 
-				let text = output(children, prefixPostfixBlock: blockToPass)
+				let text = output(children, options: options, prefixPostfixBlock: blockToPass)
 
 				result += "\(prefix)**" + text + "**\(postfix)"
 			case "a":
 				if let destination = tag.attributes["href"] {
-					result += "[\(output(children))](\(destination))"
+					result += "[\(output(children, options: options))](\(destination))"
 				} else {
-					result += output(children)
+					result += output(children, options: options)
 				}
 			case "ul":
 				if !context.contains(.isFirstChild) {
 					result += "\n\n"
 				}
-				result += output(children, context: .isUnorderedList)
+				result += output(children, options: options, context: .isUnorderedList)
 
 				if !context.contains(.isFinalChild) {
 					result += "\n\n"
@@ -119,23 +132,24 @@ public extension Element {
 				if !context.contains(.isFirstChild) {
 					result += "\n\n"
 				}
-				result += output(children, context: .isOrderedList)
+				result += output(children, options: options, context: .isOrderedList)
 
 				if !context.contains(.isFinalChild) {
 					result += "\n\n"
 				}
 			case "li":
 				if context.contains(.isUnorderedList) {
-					result += "* \(output(children))"
+					let bullet = options.contains(.unorderedListBullets) ? "•" : "*"
+					result += "\(bullet) \(output(children, options: options))"
 				}
 				if context.contains(.isOrderedList) {
-					result += "\(childIndex + 1). \(output(children))"
+					result += "\(childIndex + 1). \(output(children, options: options))"
 				}
 				if !context.contains(.isFinalChild) {
 					result += "\n"
 				}
 			default:
-				result += output(children)
+				result += output(children, options: options)
 			}
 		case let .text(text):
 			// replace all whitespace with a single space, and escape *
@@ -167,6 +181,7 @@ public extension Element {
 
 	private func output(
 		_ children: [Element],
+		options: MarkdownGenerator.Options,
 		context: OutputContext = [],
 		prefixPostfixBlock: ((String, String) -> Void)? = nil
 	) -> String {
@@ -181,7 +196,7 @@ public extension Element {
 			if index == childrenWithContent.count - 1 {
 				context.insert(.isFinalChild)
 			}
-			result += child.toMarkdownWithError(context: context, childIndex: index, prefixPostfixBlock: prefixPostfixBlock)
+			result += child.toMarkdown(options: options, context: context, childIndex: index, prefixPostfixBlock: prefixPostfixBlock)
 		}
 
 		if let prefixPostfixBlock = prefixPostfixBlock {

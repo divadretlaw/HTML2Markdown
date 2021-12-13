@@ -5,7 +5,7 @@ final class MarkdownGeneratorTests: XCTestCase {
 	private func doConvert(_ html: String) throws -> String {
 		return try HTMLParser()
 			.parse(html: html)
-			.toMarkdownWithError()
+			.toMarkdown()
 	}
 
 	func testPlainString() throws {
