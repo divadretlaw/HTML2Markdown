@@ -2,10 +2,10 @@ import XCTest
 @testable import HTML2Markdown
 
 final class MarkdownGeneratorTests: XCTestCase {
-	private func doConvert(_ html: String) throws -> String {
+	private func doConvert(_ html: String, options: MarkdownGenerator.Options = []) throws -> String {
 		return try HTMLParser()
 			.parse(html: html)
-			.toMarkdown()
+			.toMarkdown(options: options)
 	}
 
 	func testPlainString() throws {
@@ -68,6 +68,8 @@ final class MarkdownGeneratorTests: XCTestCase {
 		let html = "<ul><li>one</li><li>two</li><li>three</li></ul>"
 		XCTAssertEqual(try doConvert(html),
 					   "* one\n* two\n* three")
+		XCTAssertEqual(try doConvert(html, options: .unorderedListBullets),
+					   "• one\n• two\n• three")
 	}
 
 	func testUnorderedListWithTextBefore() throws {
