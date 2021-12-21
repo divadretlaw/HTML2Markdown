@@ -11,6 +11,7 @@ public enum MarkdownGenerator {
 	public struct Options: OptionSet {
 		public let rawValue: Int
 
+		/// Output a pretty bullet `•` instead of an asterisk, for unordered lists
 		public static let unorderedListBullets = Options(rawValue: 1 << 0)
 
 		public init(rawValue: Int) {
