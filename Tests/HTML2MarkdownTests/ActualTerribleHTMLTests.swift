@@ -552,4 +552,14 @@ Boxing Day</span></p>
 		XCTAssertEqual(try doConvert(html),
 					   "Please contact our Contact Centre team on: 0333 311 0006. Who are open during the following times:\n\nMonday to Friday: 07:00 - 19:00 Saturday and Sunday: 08:00 - 16:00 Bank Holidays: 08:00 - 16:00 except Christmas Day and Boxing Day")
 	}
+
+	func test057() throws {
+		let html = """
+<p>Category B.  </p>
+<p>Platform 1 has step free access and can be reached via a ramp with a moderate gradient. Platform 2 has step free access via a ramp with a moderate gradient. However, to go between the platforms you do have to use the level crossing which is an unsmooth surface.  </p>
+<p>This station doesn't have any tactile paving at the platform edges. <o:p></o:p></p>
+"""
+		XCTAssertEqual(try doConvert(html),
+					   "Category B.\n\nPlatform 1 has step free access and can be reached via a ramp with a moderate gradient. Platform 2 has step free access via a ramp with a moderate gradient. However, to go between the platforms you do have to use the level crossing which is an unsmooth surface.\n\nThis station doesn't have any tactile paving at the platform edges.")
+	}
 }
