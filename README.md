@@ -40,3 +40,8 @@ This is a *terrible* idea.  \nI must be daft.
 All other HTML tags are removed.
 
 Note: `SwiftUI.Text` currently cannot render Markdown lists, so I've added a `MarkdownGenerator.Options.unorderedListBullets` option to generate nicer-looking bullets: `•` instead of `*`.
+
+## License
+
+MIT. See `LICENSE.md`
+
