@@ -1,0 +1,82 @@
+disabled_rules: # rule identifiers to exclude from running
+   - trailing_whitespace
+opt_in_rules: # some rules are only opt-in
+   - anyobject_protocol
+   - array_init
+   - closure_end_indentation
+   - closure_spacing
+   - collection_alignment
+   - comma_inheritance
+   - contains_over_filter_count
+   - contains_over_filter_is_empty
+   - contains_over_first_not_nil
+   - contains_over_range_nil_comparison
+   - empty_count
+   - empty_string
+   - file_header
+   - first_where
+   - force_unwrapping
+   - lower_acl_than_parent
+   - let_var_whitespace
+   - missing_docs
+   - multiline_function_chains
+   - multiline_literal_brackets
+   - multiline_parameters
+   - modifier_order
+   - overridden_super_call
+   - prefer_zero_over_explicit_init
+   - prohibited_super_call
+   # Only available in Swift 5.7
+   # - shorthand_optional_binding
+   - vertical_parameter_alignment_on_call
+   - vertical_whitespace_closing_braces
+   - vertical_whitespace_opening_braces
+
+included: # paths to include during linting. `--path` is ignored if present.
+  - "Sources"
+excluded: # paths to ignore during linting. Takes precedence over `included`.
+  - .build
+
+line_length: 200
+
+type_body_length:
+  - 300 # warning
+  - 400 # error
+
+large_tuple:
+  - 3 # warning
+  - 4 # error
+
+identifier_name:
+  allowed_symbols:
+    - "_"
+  excluded:
+    - to
+    - on
+    - id
+
+file_length:
+  - 250 # warning
+  - 300 # error
+
+type_name:
+  min_length: 3 # only warning
+  max_length: # warning and error
+    warning: 40
+    error: 50
+  excluded:
+    - iPhone
+    - ID
+  allowed_symbols:
+    - "_"
+  validates_start_with_lowercase: false
+
+function_body_length:
+  - 60
+
+function_parameter_count:
+  warning: 5
+  error: 7
+
+reporter: "xcode" # reporter type (xcode, json, csv, checkstyle, junit, html, emoji)
+indentation: 4
