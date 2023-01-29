@@ -12,15 +12,15 @@ Yes.
 
 ## How do I use it?
 
-```
+```swift
 let html = "<p>This is a <em>terrible</em> idea.<br/>I must be daft.</p>"
 
 do {
-	let dom = try HTMLParser().parse(html: html)
-	let markdown = dom.toMarkdown(options: .unorderedListBullets)
-	print(markdown)
+    let dom = try HTMLParser().parse(html: html)
+    let markdown = dom.toMarkdown(options: .unorderedListBullets)
+    print(markdown)
 } catch {
-	// parsing error
+    // parsing error
 }
 ```
     
