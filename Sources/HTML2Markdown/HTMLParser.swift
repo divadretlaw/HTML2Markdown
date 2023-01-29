@@ -369,8 +369,7 @@ public struct HTMLParser {
         
         for token in tokens {
             if try root.accept(token) == false {
-                // TODO: throw error if a token can't be handed by anything?
-                preconditionFailure()
+                continue
             }
         }
         

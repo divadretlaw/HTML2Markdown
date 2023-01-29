@@ -13,6 +13,10 @@ public enum MarkdownGenerator {
         
         /// Output a pretty bullet `•` instead of an asterisk, for unordered lists
         public static let unorderedListBullets = Options(rawValue: 1 << 0)
+        /// Escape asterisks in order to prevent them rendering as `<strong>`
+        public static let escapeAsteriks = Options(rawValue: 1 << 1)
+        /// Try to respect Mastodon classes
+        public static let mastodon = Options(rawValue: 1 << 2)
         
         public init(rawValue: Int) {
             self.rawValue = rawValue
@@ -72,6 +76,22 @@ public extension Element {
             }
         case let .element(tag, children):
             switch tag.name.lowercased() {
+            case "span":
+                if let classes = tag.attributes["class"]?.split(separator: " ") {
+                    if options.contains(.mastodon) {
+                        if classes.contains("invisible") {
+                            break
+                        }
+                        
+                        if classes.contains("ellipsis") {
+                            result += output(children, options: options)
+                            result += "…"
+                            break
+                        }
+                    }
+                }
+                
+                result += output(children, options: options)
             case "p":
                 if !context.contains(.isSingleChildInRoot),
                    !context.contains(.isFirstChild) {
@@ -162,8 +182,12 @@ public extension Element {
             let text = replace(regex: "[　  \t\n\r]{1,}", with: " ", in: text)
             
             if !text.isEmpty {
-                result += text
-                    .replacingOccurrences(of: "*", with: "\\*")
+                if options.contains(.escapeAsteriks) {
+                    result += text
+                        .replacingOccurrences(of: "*", with: "\\*")
+                } else {
+                    result += text
+                }
             }
         }
         
