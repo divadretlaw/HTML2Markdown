@@ -169,4 +169,10 @@ final class MarkdownGeneratorTests: XCTestCase {
         try doTestInertTag("span")
         try doTestInertTag("div")
     }
+    
+    func testEscaping() throws {
+        let html = "*Hello* [Test] _World_ `Code`"
+        XCTAssertEqual(try doConvert(html, options: .escapeMarkdown),
+                       "\\*Hello\\* \\[Test\\] \\_World\\_ \\`Code\\`")
+    }
 }

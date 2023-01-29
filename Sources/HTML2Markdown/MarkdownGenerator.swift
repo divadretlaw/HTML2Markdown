@@ -13,8 +13,8 @@ public enum MarkdownGenerator {
         
         /// Output a pretty bullet `•` instead of an asterisk, for unordered lists
         public static let unorderedListBullets = Options(rawValue: 1 << 0)
-        /// Escape asterisks in order to prevent them rendering as `<strong>`
-        public static let escapeAsteriks = Options(rawValue: 1 << 1)
+        /// Escape existing markdown syntax in order to prevent them being rendered
+        public static let escapeMarkdown = Options(rawValue: 1 << 1)
         /// Try to respect Mastodon classes
         public static let mastodon = Options(rawValue: 1 << 2)
         
@@ -182,9 +182,13 @@ public extension Element {
             let text = replace(regex: "[　  \t\n\r]{1,}", with: " ", in: text)
             
             if !text.isEmpty {
-                if options.contains(.escapeAsteriks) {
+                if options.contains(.escapeMarkdown) {
                     result += text
                         .replacingOccurrences(of: "*", with: "\\*")
+                        .replacingOccurrences(of: "[", with: "\\[")
+                        .replacingOccurrences(of: "]", with: "\\]")
+                        .replacingOccurrences(of: "`", with: "\\`")
+                        .replacingOccurrences(of: "_", with: "\\_")
                 } else {
                     result += text
                 }

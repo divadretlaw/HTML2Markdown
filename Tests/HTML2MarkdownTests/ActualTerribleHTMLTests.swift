@@ -2,10 +2,10 @@ import XCTest
 @testable import HTML2Markdown
 
 final class ActualTerribleHTMLTests: XCTestCase {
-    private func doConvert(_ html: String) throws -> String {
+    private func doConvert(_ html: String, options: MarkdownGenerator.Options = []) throws -> String {
         return try HTMLParser()
             .parse(html: html)
-            .toMarkdown()
+            .toMarkdown(options: options)
     }
     
     func test001() throws {
@@ -229,7 +229,7 @@ Ticket machines available 24 hours.
 Travel Centre open 09:00-18:00 Mon-Sat and 10:00-16:00 on Sun. *Sometimes the Travel Centre may be closed during these hours due to Covid-19.
 Customer Information Points open 06:30-20:30 Mon-Sat and 10:00-18:00 on Sun.
 """
-        XCTAssertEqual(try doConvert(html),
+        XCTAssertEqual(try doConvert(html, options: .escapeMarkdown),
                        "Ticket machines available 24 hours. Travel Centre open 09:00-18:00 Mon-Sat and 10:00-16:00 on Sun. \\*Sometimes the Travel Centre may be closed during these hours due to Covid-19. Customer Information Points open 06:30-20:30 Mon-Sat and 10:00-18:00 on Sun.")
     }
     
@@ -500,7 +500,7 @@ Station Scheme**</span></p>
 <p>
 </p>
 """
-        XCTAssertEqual(try doConvert(html),
+        XCTAssertEqual(try doConvert(html, options: .escapeMarkdown),
                        "Please contact our Contact Centre team on: 0333 311 0039. Who are open during the following times:\n\nMonday to Friday: 07:00 - 19:00 Saturday and Sunday: 08:00 - 16:00 Bank Holidays: 08:00 - 16:00 except Christmas Day and Boxing Day.\n\n\\*\\*Hednesford Station is accredited by the Secure Station Scheme\\*\\*")
     }
     
