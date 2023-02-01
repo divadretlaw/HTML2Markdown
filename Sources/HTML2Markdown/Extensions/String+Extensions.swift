@@ -1,13 +1,13 @@
 //
-//  HTMLEntityDecoder.swift
+//  String+Extensions.swift
+//  HTML2Markdown
 //
-//
-//  Created by Matthew Flint on 2021-12-13.
+//  Created by David Walter on 01.02.23.
 //
 
 import Foundation
 
-public enum HTMLEntityDecoder {
+extension String {
     private static let htmlEntityMap = [
         "&quot;": "\"",
         "&#34;": "\"",
@@ -33,8 +33,8 @@ public enum HTMLEntityDecoder {
         "&#201;": "É"
     ]
     
-    public static func entityDecode(_ string: String) -> String {
-        var result = string
+    func entityDecoded() -> String {
+        var result = self
         
         for (entity, replacement) in Self.htmlEntityMap {
             result = result.replacingOccurrences(of: entity, with: replacement)

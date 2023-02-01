@@ -17,7 +17,7 @@ let html = "<p>This is a <em>terrible</em> idea.<br/>I must be daft.</p>"
 
 do {
     let dom = try HTMLParser().parse(html: html)
-    let markdown = dom.toMarkdown(options: .unorderedListBullets)
+    let markdown = dom.markdownFormatted(options: .unorderedListBullets)
     print(markdown)
 } catch {
     // parsing error
@@ -44,4 +44,3 @@ Note: `SwiftUI.Text` currently cannot render Markdown lists, so I've added a `Ma
 ## License
 
 MIT. See `LICENSE.md`
-

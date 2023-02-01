@@ -5,7 +5,7 @@ final class ActualTerribleHTMLTests: XCTestCase {
     private func doConvert(_ html: String, options: MarkdownGenerator.Options = []) throws -> String {
         return try HTMLParser()
             .parse(html: html)
-            .toMarkdown(options: options)
+            .markdownFormatted(options: options)
     }
     
     func test001() throws {

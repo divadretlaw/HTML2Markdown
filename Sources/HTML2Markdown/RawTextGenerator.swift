@@ -1,20 +1,18 @@
 //
-//  MarkdownGenerator.swift
+//  RawTextGenerator.swift
 //  HTML2Markdown
 //
-//  Created by Matthew Flint on 2021-12-08.
+//  Created by David Walter on 30.01.23.
 //
 
 import Foundation
 
-public enum MarkdownGenerator {
+public enum RawTextGenerator {
     public struct Options: OptionSet {
         public let rawValue: Int
         
-        /// Output a pretty bullet `•` instead of an asterisk, for unordered lists
-        public static let unorderedListBullets = Options(rawValue: 1 << 0)
-        /// Escape existing markdown syntax in order to prevent them being rendered
-        public static let escapeMarkdown = Options(rawValue: 1 << 1)
+        /// Copy link text instead of URL
+        public static let keepLinkText = Options(rawValue: 1 << 0)
         /// Try to respect Mastodon classes
         public static let mastodon = Options(rawValue: 1 << 2)
         
@@ -24,27 +22,17 @@ public enum MarkdownGenerator {
     }
 }
 
-extension Element {
-    @available(*, deprecated, renamed: "markdownFormatted")
-    public func toMarkdown(options: MarkdownGenerator.Options = []) -> String {
-        return markdownFormatted(options: options)
-    }
-    
-    /// The parsed HTML formatted as Markddown
+public extension Element {
+    /// Extract the raw text from the parsed HTML
     ///
     /// - Parameter options: Options to customize the formatted text
-    public func markdownFormatted(options: MarkdownGenerator.Options = []) -> String {
-        var markdown = markdownFormatted(options: options, context: [], childIndex: 0)
-        
-        // we only want a maximum of two consecutive newlines
-        markdown = replace(regex: "[\n]{3,}", with: "\n\n", in: markdown)
-        
-        return markdown
+    func rawText(options: RawTextGenerator.Options = []) -> String {
+        return rawText(options: options, context: [], childIndex: 0)
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    private func markdownFormatted(
-        options: MarkdownGenerator.Options,
+    private func rawText(
+        options: RawTextGenerator.Options,
         context: OutputContext,
         childIndex: Int,
         prefixPostfixBlock: ((String, String) -> Void)? = nil
@@ -66,7 +54,7 @@ extension Element {
                 if index == childrenWithContent.count - 1 {
                     context.insert(.isFinalChild)
                 }
-                result += child.markdownFormatted(options: options, context: context, childIndex: index)
+                result += child.rawText(options: options, context: context, childIndex: index)
             }
         case let .element(tag, children):
             switch tag.name.lowercased() {
@@ -77,17 +65,15 @@ extension Element {
                             break
                         }
                         
-                        result += output(children, options: options)
-                        
                         if classes.contains("ellipsis") {
+                            result += output(children, options: options)
                             result += "…"
+                            break
                         }
-                    } else {
-                        result += output(children, options: options)
                     }
-                } else {
-                    result += output(children, options: options)
                 }
+                
+                result += output(children, options: options)
             case "p":
                 if !context.contains(.isSingleChildInRoot),
                    !context.contains(.isFirstChild) {
@@ -117,7 +103,7 @@ extension Element {
                 let text = output(children, options: options, prefixPostfixBlock: blockToPass)
                 
                 // I'd rather use _ here, but cmark-gfm has better behaviour with *
-                result += "\(prefix)*" + text + "*\(postfix)"
+                result += "\(prefix)" + text + "\(postfix)"
             case "strong":
                 var prefix = ""
                 var postfix = ""
@@ -129,10 +115,14 @@ extension Element {
                 
                 let text = output(children, options: options, prefixPostfixBlock: blockToPass)
                 
-                result += "\(prefix)**" + text + "**\(postfix)"
+                result += "\(prefix)" + text + "\(postfix)"
             case "a":
                 if let destination = tag.attributes["href"] {
-                    result += "[\(output(children, options: options))](\(destination))"
+                    if options.contains(.keepLinkText) {
+                        result += "\(output(children, options: options))"
+                    } else {
+                        result += destination
+                    }
                 } else {
                     result += output(children, options: options)
                 }
@@ -156,7 +146,7 @@ extension Element {
                 }
             case "li":
                 if context.contains(.isUnorderedList) {
-                    let bullet = options.contains(.unorderedListBullets) ? "•" : "*"
+                    let bullet = "•"
                     result += "\(bullet) \(output(children, options: options))"
                 }
                 if context.contains(.isOrderedList) {
@@ -169,44 +159,15 @@ extension Element {
                 result += output(children, options: options)
             }
         case let .text(text):
-            // replace all whitespace with a single space, and escape *
-            
-            // Notes:
-            // the first space here is an ideographic space, U+3000
-            // second space is non-breaking space, U+00A0
-            // third space is a regular space, U+0020
-            let text = replace(regex: "[　  \t\n\r]{1,}", with: " ", in: text)
-            
-            if !text.isEmpty {
-                if options.contains(.escapeMarkdown) {
-                    result += text
-                        .replacingOccurrences(of: "*", with: "\\*")
-                        .replacingOccurrences(of: "[", with: "\\[")
-                        .replacingOccurrences(of: "]", with: "\\]")
-                        .replacingOccurrences(of: "`", with: "\\`")
-                        .replacingOccurrences(of: "_", with: "\\_")
-                } else {
-                    result += text
-                }
-            }
+            result += text
         }
         
         return result
     }
     
-    private func replace(regex pattern: String, with replacement: String, in string: String) -> String {
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-            return string
-        }
-        
-        let range = NSRange(location: 0, length: string.utf16.count)
-        
-        return regex.stringByReplacingMatches(in: string, options: [], range: range, withTemplate: replacement)
-    }
-    
     private func output(
         _ children: [Element],
-        options: MarkdownGenerator.Options,
+        options: RawTextGenerator.Options,
         context: OutputContext = [],
         prefixPostfixBlock: ((String, String) -> Void)? = nil
     ) -> String {
@@ -221,7 +182,7 @@ extension Element {
             if index == childrenWithContent.count - 1 {
                 context.insert(.isFinalChild)
             }
-            result += child.markdownFormatted(options: options, context: context, childIndex: index, prefixPostfixBlock: prefixPostfixBlock)
+            result += child.rawText(options: options, context: context, childIndex: index, prefixPostfixBlock: prefixPostfixBlock)
         }
         
         if let prefixPostfixBlock = prefixPostfixBlock {

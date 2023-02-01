@@ -1,18 +1,25 @@
 import XCTest
 @testable import HTML2Markdown
 
-final class MarkdownTests: XCTestCase {
-    private func doConvert(_ html: String) throws -> String {
+final class RawTextTests: XCTestCase {
+    private func doConvert(_ html: String, options: RawTextGenerator.Options = []) throws -> String {
         return try HTMLParser()
             .parse(html: html)
-            .markdownFormatted(options: .mastodon)
+            .rawText(options: options)
     }
     
     func testExampleStatus() throws {
         let html = "<p>&quot;I lost my inheritance with one wrong digit on my sort code&quot;</p><p><a href=\"https://www.theguardian.com/money/2019/dec/07/i-lost-my-193000-inheritance-with-one-wrong-digit-on-my-sort-code\" rel=\"nofollow noopener noreferrer\" target=\"_blank\"><span class=\"invisible\">https://www.</span><span class=\"ellipsis\">theguardian.com/money/2019/dec</span><span class=\"invisible\">/07/i-lost-my-193000-inheritance-with-one-wrong-digit-on-my-sort-code</span></a></p>"
         
         XCTAssertEqual(try doConvert(html),
-                       "\"I lost my inheritance with one wrong digit on my sort code\"\n\n[theguardian.com/money/2019/dec…](https://www.theguardian.com/money/2019/dec/07/i-lost-my-193000-inheritance-with-one-wrong-digit-on-my-sort-code)")
+                       "\"I lost my inheritance with one wrong digit on my sort code\"\n\nhttps://www.theguardian.com/money/2019/dec/07/i-lost-my-193000-inheritance-with-one-wrong-digit-on-my-sort-code")
+    }
+    
+    func testExampleStatusKeepLinkText() throws {
+        let html = "<p>&quot;I lost my inheritance with one wrong digit on my sort code&quot;</p><p><a href=\"https://www.theguardian.com/money/2019/dec/07/i-lost-my-193000-inheritance-with-one-wrong-digit-on-my-sort-code\" rel=\"nofollow noopener noreferrer\" target=\"_blank\"><span class=\"invisible\">https://www.</span><span class=\"ellipsis\">theguardian.com/money/2019/dec</span><span class=\"invisible\">/07/i-lost-my-193000-inheritance-with-one-wrong-digit-on-my-sort-code</span></a></p>"
+        
+        XCTAssertEqual(try doConvert(html, options: [.mastodon, .keepLinkText]),
+                       "\"I lost my inheritance with one wrong digit on my sort code\"\n\ntheguardian.com/money/2019/dec…")
     }
     
     func testMarkdownWithinMastodonContent() throws {
