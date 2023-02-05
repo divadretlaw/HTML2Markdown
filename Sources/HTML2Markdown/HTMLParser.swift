@@ -6,28 +6,19 @@
 //
 
 import Foundation
+import SwiftSoup
 
 public struct HTMLParser {
-    let tokenizer: Tokenizer
+    let baseUri: String
+    let parser: Parser
     
-    public init() {
-        self.tokenizer = Tokenizer()
+    public init(baseUri: String = "", parser: Parser = Parser.htmlParser()) {
+        self.baseUri = baseUri
+        self.parser = parser
     }
     
-    public func parse(html: String) throws -> Element {
-        let tokens = try tokenizer.tokenize(html: html)
-        return try parse(tokens: tokens)
-    }
-    
-    func parse(tokens: [TokenType]) throws -> Element {
-        let root = HTMLElement()
-        
-        for token in tokens {
-            if try root.accept(token) == false {
-                continue
-            }
-        }
-        
-        return try root.result()
+    public func parse(html: String) throws -> Node {
+        let document = try SwiftSoup.parse(html, baseUri, parser)
+        return document
     }
 }

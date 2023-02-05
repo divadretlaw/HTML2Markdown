@@ -16,10 +16,13 @@ let package = Package(
             targets: ["HTML2Markdown"]
         ),
     ],
+    dependencies: [
+        .package(url: "https://github.com/scinfu/SwiftSoup", from: "2.5.3")
+    ],
     targets: [
         .target(
             name: "HTML2Markdown",
-            dependencies: []
+            dependencies: ["SwiftSoup"]
         ),
         .testTarget(
             name: "HTML2MarkdownTests",

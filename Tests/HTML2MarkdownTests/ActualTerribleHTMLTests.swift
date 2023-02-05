@@ -16,7 +16,7 @@ final class ActualTerribleHTMLTests: XCTestCase {
 <p> </p>
 """
         XCTAssertEqual(try doConvert(html),
-                       "Rail replacement bus services for Greater Anglia, London Overground, and TfL Rail will depart from:\n\nMontfichet Road, Bus Stop W, for Eastbound services - [map here](https://www.nationalrail.co.uk/DR%20A%20Stratford%20CRL-040.pdf)")
+                       "Rail replacement bus services for Greater Anglia, London Overground, and TfL Rail will depart from:\n\nMontfichet Road, Bus Stop W, for Eastbound services - [map here](https://www.nationalrail.co.uk/DR%20A%20Stratford%20CRL-040.pdf)")
     }
     
     func test002() throws {
@@ -41,7 +41,7 @@ final class ActualTerribleHTMLTests: XCTestCase {
 <span class="ophr" style="font: 12px/normal Arial, Helvetica, sans-serif; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;">Monday-Friday 08:00-21:00</span><span style="font: 12px/normal Arial, Helvetica, sans-serif; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; float: none; display: inline !important; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;"><span class="Apple-converted-space"> </span></span><br style="font: 12px/normal Arial, Helvetica, sans-serif; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;"><span class="ophr" style="font: 12px/normal Arial, Helvetica, sans-serif; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;">Saturday 10:00-18:00</span><span style="font: 12px/normal Arial, Helvetica, sans-serif; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; float: none; display: inline !important; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;"><span class="Apple-converted-space"> </span></span><br style="font: 12px/normal Arial, Helvetica, sans-serif; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;"><span class="ophr" style="font: 12px/normal Arial, Helvetica, sans-serif; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;">Sunday 10:00-18:00</span><span style="font: 12px/normal Arial, Helvetica, sans-serif; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; float: none; display: inline !important; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;"><span class="Apple-converted-space"> </span></span>
 """
         XCTAssertEqual(try doConvert(html),
-                       "Monday-Friday 08:00-21:00  \nSaturday 10:00-18:00  \nSunday 10:00-18:00")
+                       "Monday-Friday 08:00-21:00   \nSaturday 10:00-18:00   \nSunday 10:00-18:00")
     }
     
     func test005() throws {
@@ -53,7 +53,7 @@ final class ActualTerribleHTMLTests: XCTestCase {
 <p>Changing Places is <a href="https://changingplaces.uktoiletmap.org/toilet/view/1722"><span><span><span lang="EN-GB">a campaign</span></span></span></a><span> on behalf of people who are unable to use standard accessible toilets and are usually more spacious, fitted with advanced equipment and provide the user with a private, comfortable and hygienic space.</span></p>
 """
         XCTAssertEqual(try doConvert(html),
-                       "The toilets can be located on the lower concourse.\n\nA Changing Place facility is available for use by disabled passengers in London Bridge. The space has a height-adjustable adult-sized changing bench, hoist, shower facility, extra wide rolls of paper, and non-slip floors.\n\nThe facility is located on the on the upper concourse and can be accessed from an accessible lift on the lower concourse, at street level or via a lift on the [London Underground](https://tfl.gov.uk/modes/tube/)[.](https://tfl.gov.uk/modes/tube/)\n\nIf you, or a passenger you are accompanying, requires use of the Changing Place room, please speak to a member of staff, contact our control centre on 02072341108 or press one of our assistance help points throughout the station so we can help you gain access.\n\nChanging Places is [a campaign](https://changingplaces.uktoiletmap.org/toilet/view/1722) on behalf of people who are unable to use standard accessible toilets and are usually more spacious, fitted with advanced equipment and provide the user with a private, comfortable and hygienic space.")
+                       "The toilets can be located on the lower concourse.\n\nA Changing Place facility is available for use by disabled passengers in London Bridge. The space has a height-adjustable adult-sized changing bench, hoist, shower facility, extra wide rolls of paper, and non-slip floors.\n\nThe facility is located on the on the upper concourse and can be accessed from an accessible lift on the lower concourse, at street level or via a lift on the [London Underground](https://tfl.gov.uk/modes/tube/)[.](https://tfl.gov.uk/modes/tube/)\n\nIf you, or a passenger you are accompanying, requires use of the Changing Place room, please speak to a member of staff, contact our control centre on 02072341108 or press one of our assistance help points throughout the station so we can help you gain access.\n\nChanging Places is [a campaign](https://changingplaces.uktoiletmap.org/toilet/view/1722) on behalf of people who are unable to use standard accessible toilets and are usually more spacious, fitted with advanced equipment and provide the user with a private, comfortable and hygienic space.")
     }
     
     func test006() throws {
@@ -61,7 +61,7 @@ final class ActualTerribleHTMLTests: XCTestCase {
 <span class="ophr" style="font: 12px/normal Arial, Helvetica, sans-serif; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;">Monday-Saturday 07:00-22:15</span><span style="font: 12px/normal Arial, Helvetica, sans-serif; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; float: none; display: inline !important; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;"><span class="Apple-converted-space"> </span></span><br style="font: 12px/normal Arial, Helvetica, sans-serif; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;"><span class="ophr" style="font: 12px/normal Arial, Helvetica, sans-serif; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;">Sunday 09:00-20:45</span><span style="font: 12px/normal Arial, Helvetica, sans-serif; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; float: none; display: inline !important; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;"><span class="Apple-converted-space"> </span></span><br style="font: 12px/normal Arial, Helvetica, sans-serif; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;"><p style="font: 12px/1.4em Arial, Helvetica, sans-serif; margin: 0px; padding: 0px 0px 1em; text-align: left; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;">Station Reception</p>
 """
         XCTAssertEqual(try doConvert(html),
-                       "Monday-Saturday 07:00-22:15  \nSunday 09:00-20:45  \n\nStation Reception")
+                       "Monday-Saturday 07:00-22:15   \nSunday 09:00-20:45   \n\nStation Reception")
     }
     
     func test007() throws {
@@ -69,7 +69,7 @@ final class ActualTerribleHTMLTests: XCTestCase {
 <p>The entrance to the public toilets is on the main concourse opposite platform 18, and these facilities have an accessible toilet and baby changing facilities. There is a another accessible toilet outside exit 3 operated by a RADAR&nbsp;key.</p>
 """
         XCTAssertEqual(try doConvert(html),
-                       "The entrance to the public toilets is on the main concourse opposite platform 18, and these facilities have an accessible toilet and baby changing facilities. There is a another accessible toilet outside exit 3 operated by a RADAR key.")
+                       "The entrance to the public toilets is on the main concourse opposite platform 18, and these facilities have an accessible toilet and baby changing facilities. There is a another accessible toilet outside exit 3 operated by a RADAR\u{00A0}key.")
     }
     
     func test008() throws {
@@ -170,7 +170,7 @@ Closed on Christmas Day and Boxing Day
 <p style="font-style: normal; font-weight: normal; font-size: 12px; line-height: 1.4em; font-feature-settings: normal; font-language-override: normal; font-kerning: auto; font-synthesis: weight style; font-variant: normal; margin: 0px; padding: 0px 0px 1em; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal;">The travel centre is on the left as you enter through the main entrance.</p> <p style="font-style: normal; font-weight: normal; font-size: 12px; line-height: 1.4em; font-feature-settings: normal; font-language-override: normal; font-kerning: auto; font-synthesis: weight style; font-variant: normal; margin: 0px; padding: 0px 0px 1em; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal;">Advanced bookings are available:</p> <p style="font-style: normal; font-weight: normal; font-size: 12px; line-height: 1.4em; font-feature-settings: normal; font-language-override: normal; font-kerning: auto; font-synthesis: weight style; font-variant: normal; margin: 0px; padding: 0px 0px 1em; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal;"> Monday to Friday - 06:30 to 21:00<br /> Saturday - 08:30 to 21:00<br /> Sunday - 07:30 to 21:00</p> <p style="font-style: normal; font-weight: normal; font-size: 12px; line-height: 1.4em; font-feature-settings: normal; font-language-override: normal; font-kerning: auto; font-synthesis: weight style; font-variant: normal; margin: 0px; padding: 0px 0px 1em; text-transform: none; text-indent: 0px; letter-spacing: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal;"></p>
 """
         XCTAssertEqual(try doConvert(html),
-                       "The travel centre is on the left as you enter through the main entrance.\n\nAdvanced bookings are available:\n\nMonday to Friday - 06:30 to 21:00  \n Saturday - 08:30 to 21:00  \n Sunday - 07:30 to 21:00")
+                       "The travel centre is on the left as you enter through the main entrance.\n\nAdvanced bookings are available:\n\nMonday to Friday - 06:30 to 21:00  \n Saturday - 08:30 to 21:00  \n Sunday - 07:30 to 21:00")
     }
     
     func test018() throws {
@@ -179,7 +179,7 @@ Closed on Christmas Day and Boxing Day
 <p style="margin: 0px; padding: 0px 0px 1em; text-transform: none; line-height: 1.4em; text-indent: 0px; letter-spacing: normal; font-size: 12px; font-style: normal; font-variant: normal; font-weight: normal; word-spacing: 0px; white-space: normal; font-size-adjust: none; font-stretch: normal; -webkit-text-stroke-width: 0px;">Customers can seek information and assistance from the ticket office or the Mobility Assistance Reception.</p>
 """
         XCTAssertEqual(try doConvert(html),
-                       "Monday-Sunday 07:00-23:00  \n\nCustomers can seek information and assistance from the ticket office or the Mobility Assistance Reception.")
+                       "Monday-Sunday 07:00-23:00   \n\nCustomers can seek information and assistance from the ticket office or the Mobility Assistance Reception.")
     }
     
     func test019() throws {
@@ -188,7 +188,7 @@ Closed on Christmas Day and Boxing Day
 <p>There are also accessible showers located in the First Class Lounge, shared between Caledonian Sleeper and Avanti West Coast.</p>
 """
         XCTAssertEqual(try doConvert(html),
-                       "These are located by the entrance to platforms 1-3\n\nThere are also accessible showers located in the First Class Lounge, shared between Caledonian Sleeper and Avanti West Coast.")
+                       "These are located by the entrance to platforms 1-3\n\nThere are also accessible showers located in the First Class Lounge, shared between Caledonian Sleeper and Avanti West Coast.")
     }
     
     func test020() throws {
@@ -220,7 +220,7 @@ Closed on Christmas Day and Boxing Day
 <p>Platforms A and B and the areas on the low level part of St Pancras, are managed by <a href="https://www.networkrail.co.uk/stations/st-pancras-international/">Network Rail.</a></p>
 """
         XCTAssertEqual(try doConvert(html),
-                       "Platforms 1-4 and 11-13, along with the domestic departures areas are managed by High Speed 1 (London and Continental Stations).\n\nPlatforms 5-10 and the international departures areas are managed by [Eurostar](http://www.eurostar.com).\n\nPlatforms A and B and the areas on the low level part of St Pancras, are managed by [Network Rail.](https://www.networkrail.co.uk/stations/st-pancras-international/)")
+                       "Platforms 1-4 and 11-13, along with the domestic departures areas are managed by High Speed 1 (London and Continental Stations).\n\nPlatforms 5-10 and the international departures areas are managed by [Eurostar](http://www.eurostar.com).\n\nPlatforms A and B and the areas on the low level part of St Pancras, are managed by [Network Rail.](https://www.networkrail.co.uk/stations/st-pancras-international/)")
     }
     
     func test023() throws {
@@ -240,7 +240,7 @@ Customer Information Points open 06:30-20:30 Mon-Sat and 10:00-18:00 on Sun.
 <p> </p>
 """
         XCTAssertEqual(try doConvert(html),
-                       "TfL Customer Services Tel 0343 222 1234")
+                       "TfL Customer Services  Tel 0343 222 1234")
     }
     
     func test025() throws {
@@ -316,7 +316,7 @@ In addition, there is also a <a href="https://changingplaces.uktoiletmap.org/">C
 Changing Places is a campaign on behalf of people who are unable to use standard accessible toilets and are usually more spacious, fitted with advanced equipment and provide the user with a private, comfortable and hygienic space.</p>
 """
         XCTAssertEqual(try doConvert(html),
-                       "Toilets and accessible toilets are located at the east end of the main concourse.  \n In addition, there is also a [Changing Place](https://changingplaces.uktoiletmap.org/) facility available. This provides a changing bench, hoist, height adjustable sink and non-slip floors. The Changing place is located by the north entrance to the station, in the same building as the cycle storage facilities. It is on the first floor of the building and has step-free access. Please speak to station staff who will arrange access to the building.  \n Changing Places is a campaign on behalf of people who are unable to use standard accessible toilets and are usually more spacious, fitted with advanced equipment and provide the user with a private, comfortable and hygienic space.")
+                       "Toilets and accessible toilets are located at the east end of the main concourse.  \n In addition, there is also a [Changing Place](https://changingplaces.uktoiletmap.org/)\u{00A0}facility available. This provides a changing bench, hoist, height adjustable sink and non-slip floors. The Changing place is located by the north entrance to the station, in the same building as the cycle storage facilities. It is on the first floor of the building and has step-free access. Please speak to station staff who will arrange access to the building.  \n Changing Places is a campaign on behalf of people who are unable to use standard accessible toilets and are usually more spacious, fitted with advanced equipment and provide the user with a private, comfortable and hygienic space.")
     }
     
     func test033() throws {
@@ -360,7 +360,7 @@ Changing Places is a campaign on behalf of people who are unable to use standard
 </ul>
 """
         XCTAssertEqual(try doConvert(html),
-                       "* An accessible, heated waiting room is located on Platform 4.\n* The waiting room is open from first to last train.")
+                       "* An accessible, heated\u{00A0}waiting room is located on Platform 4.\n* The\u{00A0}waiting room is open from first to last train.")
     }
     
     func test037() throws {
@@ -373,7 +373,7 @@ Changing Places is a campaign on behalf of people who are unable to use standard
 <p> </p>
 """
         XCTAssertEqual(try doConvert(html),
-                       "Rail replacement bus services will depart from:\n\n* Atlanta Boulevard for both Westbound and Eastbound services\n\n[Click here for map](https://www.nationalrail.co.uk/DR%20I%20Romford%20CRL-040.pdf)")
+                       "Rail replacement bus services will depart from:\n\n* Atlanta Boulevard for both Westbound and Eastbound services\n\n[Click here for map](https://www.nationalrail.co.uk/DR%20I%20Romford%20CRL-040.pdf)")
     }
     
     func test038() throws {
@@ -399,7 +399,7 @@ Accessible Toilet Location - Platform 1
 <p>This station has heated waiting rooms available. Seating is available at an accessible height in the waiting room and on platforms</p><p>Platform 1 Waiting Room Opening Times - Mon - Fri 05:30- 23:10. Sat&nbsp;&nbsp;05:30- 21:30. Sun 08:45- 22.40</p> <p>Platform 2 waiting Room Opening Times - Mon - Fri 05:30 - 23:20. Sat&nbsp;&nbsp;05:30- 23:10 Sun 08:45- 23:10</p>
 """
         XCTAssertEqual(try doConvert(html),
-                       "This station has heated waiting rooms available. Seating is available at an accessible height in the waiting room and on platforms\n\nPlatform 1 Waiting Room Opening Times - Mon - Fri 05:30- 23:10. Sat 05:30- 21:30. Sun 08:45- 22.40\n\nPlatform 2 waiting Room Opening Times - Mon - Fri 05:30 - 23:20. Sat 05:30- 23:10 Sun 08:45- 23:10")
+                       "This station has heated waiting rooms available. Seating is available at an accessible height in the waiting room and on platforms\n\nPlatform 1 Waiting Room Opening Times - Mon - Fri 05:30- 23:10. Sat\u{00A0}\u{00A0}05:30- 21:30. Sun 08:45- 22.40\n\nPlatform 2 waiting Room Opening Times - Mon - Fri 05:30 - 23:20. Sat\u{00A0}\u{00A0}05:30- 23:10 Sun 08:45- 23:10")
     }
     
     func test041() throws {
