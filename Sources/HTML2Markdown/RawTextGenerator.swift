@@ -100,7 +100,7 @@ extension Node {
             }
         case "br":
             if !context.contains(.isFinalChild) {
-                result += "  \n"
+                result += "\n"
             }
             // TODO: strip whitespace on the next line of text, immediately after this linebreak
         case "em":

@@ -79,7 +79,7 @@ extension Node {
     ) -> String {
         var result = ""
         let children = getChildNodes()
-                
+        
         switch self.nodeName() {
         case "span":
             if let classes = getAttributes()?.get(key: "class").split(separator: " ") {
@@ -113,10 +113,10 @@ extension Node {
             }
         case "br":
             if !context.contains(.isFinalChild) {
-                result += "  \n"
+                result += "\n"
             }
             // TODO: strip whitespace on the next line of text, immediately after this linebreak
-        case "em":
+        case "em", "i":
             var prefix = ""
             var postfix = ""
             
@@ -128,8 +128,8 @@ extension Node {
             let text = output(children, options: options, prefixPostfixBlock: blockToPass)
             
             // I'd rather use _ here, but cmark-gfm has better behaviour with *
-            result += "\(prefix)*" + text + "*\(postfix)"
-        case "strong":
+            result += "\(prefix)*\(text)*\(postfix)"
+        case "strong", "b":
             var prefix = ""
             var postfix = ""
             
@@ -140,7 +140,7 @@ extension Node {
             
             let text = output(children, options: options, prefixPostfixBlock: blockToPass)
             
-            result += "\(prefix)**" + text + "**\(postfix)"
+            result += "\(prefix)**\(text)**\(postfix)"
         case "a":
             if let destination = getAttributes()?.get(key: "href"), !destination.isEmpty {
                 result += "[\(output(children, options: options))](\(destination))"

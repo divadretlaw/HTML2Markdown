@@ -29,7 +29,7 @@ final class MarkdownGeneratorTests: XCTestCase {
     func testLineBreak() throws {
         let html = "hello<br/>world"
         XCTAssertEqual(try doConvert(html),
-                       "hello  \nworld")
+                       "hello\nworld")
     }
     
     func testTrailingLineBreak() throws {
