@@ -4,7 +4,7 @@ import XCTest
 final class MarkdownTests: XCTestCase {
     private func doConvert(_ html: String) throws -> String {
         return try HTMLParser()
-            .parse(html: html)
+            .parse(html: html, evaluateMarkdown: true)
             .markdownFormatted(options: .mastodon)
     }
     
@@ -40,6 +40,33 @@ final class MarkdownTests: XCTestCase {
     
     func testWeirdFormat3() throws {
         let html = "<p>Watched this with the trial version of the second Coming of <a href=\"https://cinematheque.social/tags/Movist\" class=\"mention hashtag\" rel=\"nofollow noopener noreferrer\" target=\"_blank\">#<span>Movist</span></a> and I must say I\'m quite impressed with the quality. Definitely because The Beast is a pretty dark, noirish affair. The screens are from a copy available on Archive (not a real DVD rip) which tend to be riddled with digital artefacts but here\'s a nice, soft filmic grain..</p><p>What are your favourite <a href=\"https://cinematheque.social/tags/MediaPlayer\">#<span>MediaPlayer</span></a>‍</p>"
+        do {
+            print(try doConvert(html))
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+    }
+    
+    func testLinkWithinFormatted() throws {
+        let html = "<p>This will be the first `<a href=\"https://mastodon.social/tags/if\" class=\"mention hashtag\" rel=\"tag\">#<span>if</span></a> os()` you write. It won&#39;t be your last.</p>"
+        do {
+            print(try doConvert(html))
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+    }
+    
+    func testCodeFormatted() throws {
+        let html = "<p>Some Code ```<br/>let string = \"Hello World\"<br/>```</p>"
+        do {
+            print(try doConvert(html))
+        } catch {
+            XCTFail(error.localizedDescription)
+        }
+    }
+    
+    func testCodeFormattedAndInline() throws {
+        let html = "<p>Some Code ```<br/>let string = \"Hello World\"<br/>```<br/>Followed by `inline code`</p>"
         do {
             print(try doConvert(html))
         } catch {

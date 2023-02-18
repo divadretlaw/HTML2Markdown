@@ -17,8 +17,22 @@ public struct HTMLParser {
         self.parser = parser
     }
     
-    public func parse(html: String) throws -> Node {
-        let document = try SwiftSoup.parse(html, baseUri, parser)
+    public func parse(html: String, evaluateMarkdown: Bool = false) throws -> Node {
+        let htmlString: String
+        if evaluateMarkdown {
+            htmlString = html
+                .replacingOccurrences(of: "```(.|\n)*?```", with: "<pre><code>$0</code></pre>", options: [.regularExpression])
+                .replacingOccurrences(of: "<pre><code>```", with: "<pre><code>")
+                .replacingOccurrences(of: "```</code></pre>", with: "</code></pre>")
+                .replacingOccurrences(of: "`.*?`", with: "<code>$0</code>", options: [.regularExpression])
+                .replacingOccurrences(of: "<code>`", with: "<code>")
+                .replacingOccurrences(of: "`</code>", with: "</code>")
+        } else {
+            htmlString = html
+        }
+        let document = try SwiftSoup.parse(htmlString, baseUri, parser)
         return document
     }
+    
+    static var codeRegex = try? NSRegularExpression(pattern: "```.+```", options: .dotMatchesLineSeparators)
 }

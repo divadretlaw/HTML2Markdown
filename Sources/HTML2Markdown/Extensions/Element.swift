@@ -37,5 +37,7 @@ extension Node {
         static let isFinalChild = OutputContext(rawValue: 1 << 2)
         static let isUnorderedList = OutputContext(rawValue: 1 << 3)
         static let isOrderedList = OutputContext(rawValue: 1 << 4)
+        static let isPre = OutputContext(rawValue: 1 << 5)
+        static let isCode = OutputContext(rawValue: 1 << 6)
     }
 }

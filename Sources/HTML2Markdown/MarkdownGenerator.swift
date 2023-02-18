@@ -81,6 +81,20 @@ extension Node {
         let children = getChildNodes()
         
         switch self.nodeName() {
+        case "pre":
+            if context.contains(.isPre) {
+                result += output(children, options: options, context: .isCode)
+            } else {
+                result += "\n```\n" + output(children, options: options, context: .isPre).trimmingCharacters(in: .whitespacesAndNewlines) + "\n```\n"
+            }
+        case "code":
+            if context.contains(.isCode) {
+                result += output(children, options: options, context: .isCode)
+            } else if context.contains(.isPre) {
+                result += output(children, options: options, context: .isCode)
+            } else {
+                result += "`" + output(children, options: options, context: .isCode) + "`"
+            }
         case "span":
             if let classes = getAttributes()?.get(key: "class").split(separator: " ") {
                 if options.contains(.mastodon) {
@@ -142,7 +156,7 @@ extension Node {
             
             result += "\(prefix)**\(text)**\(postfix)"
         case "a":
-            if let destination = getAttributes()?.get(key: "href"), !destination.isEmpty {
+            if !context.contains(.isCode), let destination = getAttributes()?.get(key: "href"), !destination.isEmpty {
                 result += "[\(output(children, options: options))](\(destination))"
             } else {
                 result += output(children, options: options)
