@@ -190,6 +190,18 @@ extension Node {
             if !context.contains(.isFinalChild) {
                 result += "\n"
             }
+        case "strike":
+            var prefix = ""
+            var postfix = ""
+            
+            let blockToPass: (String, String) -> Void = {
+                prefix = $0
+                postfix = $1
+            }
+            
+            let text = output(children, options: options, prefixPostfixBlock: blockToPass)
+            
+            result += "\(prefix)~~\(text)~~\(postfix)"
         case "#text":
             // replace all whitespace with a single space, and escape *
             
