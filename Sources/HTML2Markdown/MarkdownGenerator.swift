@@ -9,7 +9,7 @@ import Foundation
 import SwiftSoup
 
 public enum MarkdownGenerator {
-    public struct Options: OptionSet {
+    public struct Options: OptionSet, Sendable {
         public let rawValue: Int
         
         /// Output a pretty bullet `•` instead of an asterisk, for unordered lists
@@ -17,7 +17,7 @@ public enum MarkdownGenerator {
         /// Escape existing markdown syntax in order to prevent them being rendered
         public static let escapeMarkdown = Options(rawValue: 1 << 1)
         /// Try to respect Mastodon classes
-        public static let mastodon = Options(rawValue: 1 << 2)
+        public static let mastodon = Options(rawValue: 1 << 10)
         
         public init(rawValue: Int) {
             self.rawValue = rawValue
@@ -37,8 +37,8 @@ extension Node {
         
         if options.contains(.mastodon) {
             markdown = markdown
-            // Add space between hashtags and mentions that follow each other
-                .replacingOccurrences(of: ")[", with: ") [")
+                // Add space between hashtags and mentions that follow each other
+                    .replacingOccurrences(of: ")[", with: ") [")
         }
         
         return markdown
@@ -52,7 +52,7 @@ extension Node {
         prefixPostfixBlock: ((String, String) -> Void)? = nil
     ) -> String {
         var result = ""
-        let childrenWithContent = self.getChildNodes().filter { $0.shouldRender() }
+        let childrenWithContent = getChildNodes().filter { $0.shouldRender() }
         
         for (index, child) in childrenWithContent.enumerated() {
             var context: OutputContext = []
@@ -80,7 +80,7 @@ extension Node {
         var result = ""
         let children = getChildNodes()
         
-        switch self.nodeName() {
+        switch nodeName() {
         case "pre":
             if context.contains(.isPre) {
                 result += output(children, options: options, context: .isCode)
@@ -129,7 +129,6 @@ extension Node {
             if !context.contains(.isFinalChild) {
                 result += "\n"
             }
-            // TODO: strip whitespace on the next line of text, immediately after this linebreak
         case "em", "i":
             var prefix = ""
             var postfix = ""
@@ -141,9 +140,8 @@ extension Node {
             
             let text = output(children, options: options, prefixPostfixBlock: blockToPass)
             
-            // I'd rather use _ here, but cmark-gfm has better behaviour with *
             result += "\(prefix)*\(text)*\(postfix)"
-        case "strong", "b":
+        case "b", "strong":
             var prefix = ""
             var postfix = ""
             
@@ -155,6 +153,18 @@ extension Node {
             let text = output(children, options: options, prefixPostfixBlock: blockToPass)
             
             result += "\(prefix)**\(text)**\(postfix)"
+        case "s", "del":
+            var prefix = ""
+            var postfix = ""
+            
+            let blockToPass: (String, String) -> Void = {
+                prefix = $0
+                postfix = $1
+            }
+            
+            let text = output(children, options: options, prefixPostfixBlock: blockToPass)
+            
+            result += "\(prefix)~~\(text)~~\(postfix)"
         case "a":
             if !context.contains(.isCode), let destination = getAttributes()?.get(key: "href"), !destination.isEmpty {
                 result += "[\(output(children, options: options))](\(destination))"
@@ -190,6 +200,18 @@ extension Node {
             if !context.contains(.isFinalChild) {
                 result += "\n"
             }
+        case "blockquote":
+            var prefix = ""
+            var postfix = ""
+            
+            let blockToPass: (String, String) -> Void = {
+                prefix = $0
+                postfix = $1
+            }
+            
+            let text = output(children, options: options, prefixPostfixBlock: blockToPass)
+            
+            result += "\(prefix)\n> \(text)\n\n\(postfix)"
         case "#text":
             // replace all whitespace with a single space, and escape *
             
@@ -197,7 +219,8 @@ extension Node {
             // the first space here is an ideographic space, U+3000
             // second space is non-breaking space, U+00A0
             // third space is a regular space, U+0020
-            let text = replace(regex: "[　  \t\n\r]{1,}", with: " ", in: description).stringByDecodingHTMLEntities
+            let replacedText = replace(regex: "[　  \t\n\r]{1,}", with: " ", in: description)
+            let text = replacedText.removingHtmlEntityEncoding ?? replacedText
             if !text.isEmpty {
                 if options.contains(.escapeMarkdown) {
                     result += text
@@ -260,7 +283,7 @@ extension Node {
             }
         }
         
-        return result.stringByDecodingHTMLEntities
+        return result.removingHtmlEntityEncoding ?? result
     }
     
     private func shouldRender() -> Bool {

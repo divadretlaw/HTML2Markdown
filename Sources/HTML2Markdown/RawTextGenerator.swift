@@ -9,7 +9,7 @@ import Foundation
 import SwiftSoup
 
 public enum RawTextGenerator {
-    public struct Options: OptionSet {
+    public struct Options: OptionSet, Sendable {
         public let rawValue: Int
         
         /// Copy link text instead of URL
@@ -28,7 +28,7 @@ extension Node {
     ///
     /// - Parameter options: Options to customize the formatted text
     func rawText(options: RawTextGenerator.Options = []) -> String {
-        return rawTextRoot(options: options, context: [], childIndex: 0)
+        rawTextRoot(options: options, context: [], childIndex: 0)
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
@@ -39,7 +39,7 @@ extension Node {
         prefixPostfixBlock: ((String, String) -> Void)? = nil
     ) -> String {
         var result = ""
-        let childrenWithContent = self.getChildNodes().filter { $0.shouldRender() }
+        let childrenWithContent = getChildNodes().filter { $0.shouldRender() }
         
         for (index, child) in childrenWithContent.enumerated() {
             var context: OutputContext = []
@@ -67,7 +67,7 @@ extension Node {
         var result = ""
         let children = getChildNodes()
         
-        switch self.nodeName() {
+        switch nodeName() {
         case "span":
             if let classes = getAttributes()?.get(key: "class").split(separator: " ") {
                 if options.contains(.mastodon) {
@@ -102,32 +102,6 @@ extension Node {
             if !context.contains(.isFinalChild) {
                 result += "\n"
             }
-            // TODO: strip whitespace on the next line of text, immediately after this linebreak
-        case "em":
-            var prefix = ""
-            var postfix = ""
-            
-            let blockToPass: (String, String) -> Void = {
-                prefix = $0
-                postfix = $1
-            }
-            
-            let text = output(children, options: options, prefixPostfixBlock: blockToPass)
-            
-            // I'd rather use _ here, but cmark-gfm has better behaviour with *
-            result += "\(prefix)*" + text + "*\(postfix)"
-        case "strong":
-            var prefix = ""
-            var postfix = ""
-            
-            let blockToPass: (String, String) -> Void = {
-                prefix = $0
-                postfix = $1
-            }
-            
-            let text = output(children, options: options, prefixPostfixBlock: blockToPass)
-            
-            result += "\(prefix)**" + text + "**\(postfix)"
         case "a":
             if let destination = getAttributes()?.get(key: "href") {
                 if options.contains(.keepLinkText) {
@@ -167,7 +141,7 @@ extension Node {
                 result += "\n"
             }
         case "#text":
-            result += description.stringByDecodingHTMLEntities
+            result += description.removingHtmlEntityEncoding ?? description
         default:
             result += output(children, options: options)
         }
@@ -195,7 +169,7 @@ extension Node {
             result += child.rawText(options: options, context: context, childIndex: index, prefixPostfixBlock: prefixPostfixBlock)
         }
         
-        if let prefixPostfixBlock = prefixPostfixBlock {
+        if let prefixPostfixBlock {
             if result.hasPrefix(" "), result.hasSuffix(" ") {
                 prefixPostfixBlock(" ", " ")
                 result = result.trimmingCharacters(in: .whitespaces)
@@ -208,7 +182,7 @@ extension Node {
             }
         }
         
-        return result.stringByDecodingHTMLEntities
+        return result.removingHtmlEntityEncoding ?? result
     }
     
     private func shouldRender() -> Bool {

@@ -175,4 +175,16 @@ final class MarkdownGeneratorTests: XCTestCase {
         XCTAssertEqual(try doConvert(html, options: .escapeMarkdown),
                        "\\*Hello\\* \\[Test\\] \\_World\\_ \\`Code\\`")
     }
+    
+    func testBlockquote() throws {
+        let html = """
+        <p>Hello</p>
+        <blockquote>
+        <p>quote</p>
+        </blockquote>
+        <p>World</p>
+        """
+        XCTAssertEqual(try doConvert(html, options: .escapeMarkdown),
+                       "Hello\n\n> quote\n\nWorld")
+    }
 }

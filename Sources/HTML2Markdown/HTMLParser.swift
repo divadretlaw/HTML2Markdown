@@ -6,13 +6,13 @@
 //
 
 import Foundation
-import SwiftSoup
+@preconcurrency import SwiftSoup
 
-public struct HTMLParser {
-    let baseUri: String
+public struct HTMLParser: Sendable {
+    let baseUri: String?
     let parser: Parser
     
-    public init(baseUri: String = "", parser: Parser = Parser.htmlParser()) {
+    public init(baseUri: String? = nil, parser: Parser = Parser.htmlParser()) {
         self.baseUri = baseUri
         self.parser = parser
     }
@@ -30,9 +30,12 @@ public struct HTMLParser {
         } else {
             htmlString = html
         }
-        let document = try SwiftSoup.parse(htmlString, baseUri, parser)
-        return document
+        return if let baseUri {
+            try SwiftSoup.parse(htmlString, baseUri, parser)
+        } else {
+            try SwiftSoup.parse(htmlString, "", parser)
+        }
     }
     
-    static var codeRegex = try? NSRegularExpression(pattern: "```.+```", options: .dotMatchesLineSeparators)
+    static let codeRegex = try? NSRegularExpression(pattern: "```.+```", options: .dotMatchesLineSeparators)
 }
