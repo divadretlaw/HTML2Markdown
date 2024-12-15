@@ -131,14 +131,23 @@ extension Node {
                 result += "\n\n"
             }
         case "li":
-            if context.contains(.isUnorderedList) {
-                result += "• \(output(children, options: options))"
+            let bullet: String? = if context.contains(.isUnorderedList) {
+                "•"
+            } else if context.contains(.isOrderedList) {
+                "\(childIndex + 1)."
+            } else {
+                nil
             }
-            if context.contains(.isOrderedList) {
-                result += "\(childIndex + 1). \(output(children, options: options))"
-            }
+            
+            let text = output(children, options: options)
+            let formatted = [bullet, text]
+                .compactMap { $0 }
+                .joined(separator: " ")
+            
             if !context.contains(.isFinalChild) {
-                result += "\n"
+                result += "\(formatted)\n"
+            } else {
+                result += formatted
             }
         case "#text":
             result += description.removingHtmlEntityEncoding ?? description

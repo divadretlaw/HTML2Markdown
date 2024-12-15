@@ -38,7 +38,7 @@ extension Node {
         if options.contains(.mastodon) {
             markdown = markdown
                 // Add space between hashtags and mentions that follow each other
-                    .replacingOccurrences(of: ")[", with: ") [")
+                .replacingOccurrences(of: ")[", with: ") [")
         }
         
         return markdown
@@ -85,7 +85,12 @@ extension Node {
             if context.contains(.isPre) {
                 result += output(children, options: options, context: .isCode)
             } else {
-                result += "\n```\n" + output(children, options: options, context: .isPre).trimmingCharacters(in: .whitespacesAndNewlines) + "\n```\n"
+                let text = output(children, options: options, context: .isPre)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                let formatted = ["```", text, "```"]
+                    .joined(separator: "\n")
+                    .fenced(with: "\n")
+                result += formatted
             }
         case "code":
             if context.contains(.isCode) {
@@ -93,7 +98,9 @@ extension Node {
             } else if context.contains(.isPre) {
                 result += output(children, options: options, context: .isCode)
             } else {
-                result += "`" + output(children, options: options, context: .isCode) + "`"
+                let text = output(children, options: options, context: .isCode)
+                let formatted = text.fenced(with: "`")
+                result += formatted
             }
         case "span":
             if let classes = getAttributes()?.get(key: "class").split(separator: " ") {
@@ -121,8 +128,7 @@ extension Node {
             
             result += output(children, options: options).trimmingCharacters(in: .whitespacesAndNewlines)
             
-            if !context.contains(.isSingleChildInRoot),
-               !context.contains(.isFinalChild) {
+            if !context.contains(.isSingleChildInRoot), !context.contains(.isFinalChild) {
                 result += "\n"
             }
         case "br":
@@ -139,8 +145,8 @@ extension Node {
             }
             
             let text = output(children, options: options, prefixPostfixBlock: blockToPass)
-            
-            result += "\(prefix)*\(text)*\(postfix)"
+            let formatted = "\(prefix)*\(text)*\(postfix)"
+            result += formatted
         case "b", "strong":
             var prefix = ""
             var postfix = ""
@@ -151,8 +157,8 @@ extension Node {
             }
             
             let text = output(children, options: options, prefixPostfixBlock: blockToPass)
-            
-            result += "\(prefix)**\(text)**\(postfix)"
+            let formatted = "\(prefix)**\(text)**\(postfix)"
+            result += formatted
         case "s", "del":
             var prefix = ""
             var postfix = ""
@@ -175,7 +181,9 @@ extension Node {
             if !context.contains(.isFirstChild) {
                 result += "\n\n"
             }
-            result += output(children, options: options, context: .isUnorderedList)
+            
+            let text = output(children, options: options, context: .isUnorderedList)
+            result += text
             
             if !context.contains(.isFinalChild) {
                 result += "\n\n"
@@ -184,21 +192,31 @@ extension Node {
             if !context.contains(.isFirstChild) {
                 result += "\n\n"
             }
-            result += output(children, options: options, context: .isOrderedList)
+            
+            let text = output(children, options: options, context: .isOrderedList)
+            result += text
             
             if !context.contains(.isFinalChild) {
                 result += "\n\n"
             }
         case "li":
-            if context.contains(.isUnorderedList) {
-                let bullet = options.contains(.unorderedListBullets) ? "•" : "*"
-                result += "\(bullet) \(output(children, options: options))"
+            let bullet: String? = if context.contains(.isUnorderedList) {
+                options.contains(.unorderedListBullets) ? "•" : "*"
+            } else if context.contains(.isOrderedList) {
+                "\(childIndex + 1)."
+            } else {
+                nil
             }
-            if context.contains(.isOrderedList) {
-                result += "\(childIndex + 1). \(output(children, options: options))"
-            }
+            
+            let text = output(children, options: options)
+            let formatted = [bullet, text]
+                .compactMap { $0 }
+                .joined(separator: " ")
+            
             if !context.contains(.isFinalChild) {
-                result += "\n"
+                result += "\(formatted)\n"
+            } else {
+                result += formatted
             }
         case "blockquote":
             var prefix = ""
@@ -210,16 +228,17 @@ extension Node {
             }
             
             let text = output(children, options: options, prefixPostfixBlock: blockToPass)
-            
-            result += "\(prefix)\n> \(text)\n\n\(postfix)"
+            let formatted = [prefix, "> \(text)\n", postfix]
+                .joined(separator: "\n")
+            result += formatted
         case "#text":
-            // replace all whitespace with a single space, and escape *
+            // replace all whitespace with a single space, and escape markdown (if enabled)
             
             // Notes:
             // the first space here is an ideographic space, U+3000
             // second space is non-breaking space, U+00A0
             // third space is a regular space, U+0020
-            let replacedText = replace(regex: "[　  \t\n\r]{1,}", with: " ", in: description)
+            let replacedText = replace(regex: "[\u{3000}\u{00A0}\u{0020}\t\n\r]{1,}", with: " ", in: description)
             let text = replacedText.removingHtmlEntityEncoding ?? replacedText
             if !text.isEmpty {
                 if options.contains(.escapeMarkdown) {

@@ -19,4 +19,8 @@ extension String {
             return nil
         }
     }
+    
+    func fenced(with string: String) -> String {
+        "\(string)\(self)\(string)"
+    }
 }

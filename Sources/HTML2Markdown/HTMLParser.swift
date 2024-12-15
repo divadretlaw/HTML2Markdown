@@ -12,9 +12,9 @@ public struct HTMLParser: Sendable {
     let baseUri: String?
     let parser: Parser
     
-    public init(baseUri: String? = nil, parser: Parser = Parser.htmlParser()) {
+    public init(baseUri: String? = nil) {
         self.baseUri = baseUri
-        self.parser = parser
+        self.parser = Parser.htmlParser()
     }
     
     public func parse(html: String, evaluateMarkdown: Bool = false) throws -> Node {
@@ -36,6 +36,4 @@ public struct HTMLParser: Sendable {
             try SwiftSoup.parse(htmlString, "", parser)
         }
     }
-    
-    static let codeRegex = try? NSRegularExpression(pattern: "```.+```", options: .dotMatchesLineSeparators)
 }
